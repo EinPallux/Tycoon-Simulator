@@ -2,11 +2,14 @@
  * Save schema, versioned from day 1 (CLAUDE.md §4.3).
  * CURRENT_FORMAT_VERSION bumps with any shape change, always alongside a
  * migration in ./migrate.ts and a fixture test.
+ *
+ * v2 (Phase 2): guests, ride/stall runtime state, economy ledger, litter,
+ * rating value-EMA, milestones.
  */
 
 import { z } from "zod";
 
-export const CURRENT_FORMAT_VERSION = 1;
+export const CURRENT_FORMAT_VERSION = 2;
 
 export const placedEntitySchema = z.object({
   id: z.number().int().positive(),
@@ -17,8 +20,44 @@ export const placedEntitySchema = z.object({
   placedAt: z.number().int().nonnegative(),
 });
 
-export const saveV1Schema = z.object({
-  formatVersion: z.literal(1),
+const ledgerSchema = z.object({
+  day: z.number().int().positive(),
+  income: z.object({
+    entry: z.number().int(),
+    rides: z.number().int(),
+    stalls: z.number().int(),
+    refunds: z.number().int(),
+  }),
+  expense: z.object({
+    construction: z.number().int(),
+    upkeep: z.number().int(),
+    goods: z.number().int(),
+  }),
+});
+
+const guestSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+  thrill: z.number(),
+  patience: z.number(),
+  money: z.number().int(),
+  modelIdx: z.number().int().min(0).max(7),
+  x: z.number(),
+  z: z.number(),
+  fun: z.number(),
+  hunger: z.number(),
+  thirst: z.number(),
+  energy: z.number(),
+  bladder: z.number(),
+  xp: z.number(),
+  mood: z.number(),
+  ridesRidden: z.number().int().nonnegative(),
+  arrivedDay: z.number().int().positive(),
+  thoughts: z.array(z.string()).max(8),
+});
+
+export const saveV2Schema = z.object({
+  formatVersion: z.literal(2),
   appVersion: z.string(),
   seed: z.number(),
   rngState: z.number(),
@@ -54,7 +93,36 @@ export const saveV1Schema = z.object({
     yaw: z.number(),
     zoom: z.number(),
   }),
+  // ── Phase 2 ──
+  guests: z.array(guestSchema),
+  guestIdCounter: z.number().int().nonnegative(),
+  lifetimeGuests: z.number().int().nonnegative(),
+  rides: z.array(
+    z.object({
+      entityId: z.number().int().positive(),
+      open: z.boolean(),
+      price: z.number().int().nonnegative(),
+      lifetimeRiders: z.number().int().nonnegative(),
+    }),
+  ),
+  stalls: z.array(
+    z.object({
+      entityId: z.number().int().positive(),
+      price: z.number().int().nonnegative(),
+    }),
+  ),
+  economy: z.object({
+    entryPrice: z.number().int().nonnegative(),
+    today: ledgerSchema,
+    history: z.array(ledgerSchema),
+    lifetimeIncome: z.number().int().nonnegative(),
+    lifetimeExpense: z.number().int().nonnegative(),
+  }),
+  litter: z.array(z.object({ idx: z.number().int().nonnegative(), seed: z.number() })),
+  valueEma: z.number(),
+  milestoneTier: z.number().int().min(-1),
+  spawnAcc: z.number(),
 });
 
-export type SaveV1 = z.infer<typeof saveV1Schema>;
-export type SaveFile = SaveV1; // latest version alias
+export type SaveV2 = z.infer<typeof saveV2Schema>;
+export type SaveFile = SaveV2; // latest version alias

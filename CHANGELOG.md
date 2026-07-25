@@ -7,6 +7,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 *(nothing yet)*
 
+## [0.2.0] — 2026-07-25 — Phase 2: The Living Park
+
+### Added
+- **Guests** (up to 500): appeal-driven arrivals with day/night curves, entry payment, thrill/patience personalities, wallets, per-sim-hour needs & mood engine, A* path-walking with procedural gaits, thought logs, 11 emote bubbles, night departures.
+- **Six operating flat rides** with animated machines (Carousel, Ferris Wheel, Whirly Teacups, Sky Plunge, Bump-a-Lot Arena, Jolly Roger): queue chains, boarding fares, cycle phases, patience bails, closing-time flush, preference-scaled fun payoffs.
+- **Seven operating stalls** (2× food, 2× drinks, souvenir, info, free toilets): item pricing with fairness verdicts, cost of goods, need restoration, bladder consequences.
+- **Economy v1**: entry-price slider with elasticity, income/expense ledger (14-day history), daily rollovers with ride upkeep, lifetime books.
+- **Park rating** (5 weighted terms + "what's hurting you" hints) and **milestone tiers** with cash awards and fanfares; objective chip tracks the next tier live.
+- **Litter loop v1**: snack litter, bin prevention radius, overnight decay (janitors arrive Phase 3).
+- **Management UI**: ride/stall/guest inspectors (with follow-cam), park panel (Finances / Guests / Rating), guests & rating HUD chips, Rides + Manage dock categories.
+- **Audio v1**: fully procedural WebAudio SFX (taps, placement thunks, rate-limited coin clinks, error boings, milestone fanfare) + crowd-walla bed scaled by guest density.
+- **Save v2** with v1→v2 migration and fixture test: guests, ride/stall runtime state, ledger, litter, milestones all persist; snapshots keep ride prices across move/undo.
+- Deterministic e2e/debug hook (`window.__wanderpark`) for scripted verification.
+
+### Fixed
+- Needs decay and ride cycles now share one coherent time model (per-sim-hour needs, watchable real-time ride cycles) — guests get hungry by lunch and rides no longer swallow the whole day.
+
+### Notes
+- 33 unit/integration tests green (incl. 3-day soak, determinism hash, migration fixture); verified in-browser with 112 concurrent guests.
+
 ## [0.1.0] — 2026-07-25 — Phase 1: Foundation (first playable)
 
 ### Added

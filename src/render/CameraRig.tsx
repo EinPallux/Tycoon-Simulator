@@ -162,8 +162,21 @@ export function CameraRig() {
       s.tz += (vx * sin + vz * cos) * speed;
     }
 
+    // Follow-cam: track the selected guest until the player pans away.
+    const store = useGameStore.getState();
+    const world = store.sim?.world;
+    if (world && store.followGuest && store.selectedGuest !== null) {
+      const slot = world.guests.slotOf.get(store.selectedGuest);
+      if (slot !== undefined) {
+        s.tx = world.guests.x[slot] as number;
+        s.tz = world.guests.z[slot] as number;
+      } else {
+        store.setFollowGuest(false); // guest left the park
+      }
+    }
+    if ((vx !== 0 || vz !== 0 || s.dragging) && store.followGuest) store.setFollowGuest(false);
+
     // Clamp to park surroundings.
-    const world = useGameStore.getState().sim?.world;
     if (world) {
       const r = world.ownedRect;
       s.tx = clamp(s.tx, r.x0 - PAN_MARGIN, r.x0 + r.w + PAN_MARGIN);

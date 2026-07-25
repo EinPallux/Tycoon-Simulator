@@ -6,6 +6,8 @@
 
 import { createIdSource, type IdSource } from "@/shared/ids";
 import { createRng, restoreRng, type Rng } from "@/shared/rng";
+import { createGuestsPool, type GuestsPool } from "../entities/guests";
+import { DEFAULT_ENTRY_PRICE, type ExpenseSource, type IncomeSource } from "../balance/economy";
 import { createTileMap, setOwnedRect, type TileMap } from "./tiles";
 import { TICKS_PER_DAY } from "./time";
 
@@ -60,6 +62,83 @@ export interface CameraState {
   zoom: number;
 }
 
+/** Per-placed-ride runtime state. */
+export interface RideState {
+  entityId: number;
+  open: boolean;
+  /** Ticket price in cents (starts at def default). */
+  price: number;
+  phase: "idle" | "loading" | "running" | "unloading";
+  /** Ticks remaining in the current phase. */
+  phaseT: number;
+  /** Guest ids on board. */
+  riders: number[];
+  /** Guest ids waiting, front = next to board. */
+  queue: number[];
+  lifetimeRiders: number;
+  /** Income today in cents (resets at day rollover). */
+  incomeToday: number;
+}
+
+export interface StallState {
+  entityId: number;
+  /** Item price override in cents. */
+  price: number;
+  salesToday: number;
+  incomeToday: number;
+}
+
+export interface DayLedger {
+  day: number;
+  income: Record<IncomeSource, number>;
+  expense: Record<ExpenseSource, number>;
+}
+
+export interface EconomyState {
+  entryPrice: number;
+  /** Current (accumulating) day. */
+  today: DayLedger;
+  /** Closed days, newest first, capped. */
+  history: DayLedger[];
+  lifetimeIncome: number;
+  lifetimeExpense: number;
+}
+
+export interface LitterItem {
+  /** Tile index. */
+  idx: number;
+  /** Deterministic visual jitter seed. */
+  seed: number;
+}
+
+export interface RatingState {
+  /** 0..1000 composite. */
+  value: number;
+  terms: {
+    happiness: number;
+    rides: number;
+    cleanliness: number;
+    scenery: number;
+    value: number;
+  };
+  /** Value-perception EMA 0..1 fed by price verdicts. */
+  valueEma: number;
+}
+
+export const emptyDayLedger = (day: number): DayLedger => ({
+  day,
+  income: { entry: 0, rides: 0, stalls: 0, refunds: 0 },
+  expense: { construction: 0, upkeep: 0, goods: 0 },
+});
+
+export const createEconomy = (): EconomyState => ({
+  entryPrice: DEFAULT_ENTRY_PRICE,
+  today: emptyDayLedger(1),
+  history: [],
+  lifetimeIncome: 0,
+  lifetimeExpense: 0,
+});
+
 export interface World {
   seed: number;
   rng: Rng;
@@ -78,6 +157,21 @@ export interface World {
   placeables: Map<number, PlacedEntity>;
   placeableIds: IdSource;
   camera: CameraState;
+
+  // ── The living park (Phase 2) ────────────────────────────────────────
+  guests: GuestsPool;
+  guestIds: IdSource;
+  /** Total guests who ever entered (milestones). */
+  lifetimeGuests: number;
+  rides: Map<number, RideState>;
+  stalls: Map<number, StallState>;
+  economy: EconomyState;
+  litter: LitterItem[];
+  rating: RatingState;
+  /** Highest milestone tier index reached (−1 = none). */
+  milestoneTier: number;
+  /** Fractional spawn accumulator. */
+  spawnAcc: number;
 }
 
 export interface NewParkConfig {
@@ -126,16 +220,22 @@ export function createWorld(config: NewParkConfig): World {
       yaw: 0,
       zoom: 0.45,
     },
+    guests: createGuestsPool(),
+    guestIds: createIdSource(),
+    lifetimeGuests: 0,
+    rides: new Map(),
+    stalls: new Map(),
+    economy: createEconomy(),
+    litter: [],
+    rating: {
+      value: 0,
+      terms: { happiness: 0.7, rides: 0, cleanliness: 1, scenery: 0, value: 0.7 },
+      valueEma: 0.7,
+    },
+    milestoneTier: -1,
+    spawnAcc: 0,
   };
 }
 
-/** Rebuild run-time helpers (rng, id source) from persisted primitives. */
-export function reviveWorldInternals(
-  world: Omit<World, "rng" | "placeableIds"> & { rngState: number; placeableIdCounter: number },
-): World {
-  return {
-    ...world,
-    rng: restoreRng(world.rngState),
-    placeableIds: createIdSource(world.placeableIdCounter),
-  };
-}
+// (restoreRng re-exported path: save/serialize.ts revives worlds from saves.)
+export { restoreRng };

@@ -21,3 +21,9 @@ export const frameStats: FrameStats = {
   triangles: 0,
   instances: 0,
 };
+
+/**
+ * Render interpolation clock: fraction of the current sim tick already
+ * elapsed (written by GameRoot's loop, read by CrowdLayer & friends).
+ */
+export const renderClock = { alpha: 1 };

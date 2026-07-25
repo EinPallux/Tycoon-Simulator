@@ -329,15 +329,23 @@ function GhostPreview({ tool, hover }: { tool: Tool; hover: HoverState }) {
     const [w, d] = rotatedFootprint(def, tool.rot);
     return (
       <group>
-        <GhostModel
-          assetId={toModelAssetId(def.model)}
-          x={hover.anchorX}
-          z={hover.anchorZ}
-          rot={tool.rot}
-          w={w}
-          d={d}
-          color={color}
-        />
+        {def.model ? (
+          <GhostModel
+            assetId={toModelAssetId(def.model)}
+            x={hover.anchorX}
+            z={hover.anchorZ}
+            rot={tool.rot}
+            w={w}
+            d={d}
+            color={color}
+          />
+        ) : (
+          // Procedural rides: a simple volume ghost.
+          <mesh position={[hover.anchorX + w / 2, 0.6, hover.anchorZ + d / 2]}>
+            <boxGeometry args={[w * 0.9, 1.2, d * 0.9]} />
+            <meshBasicMaterial color={color} transparent opacity={0.35} depthWrite={false} />
+          </mesh>
+        )}
         <mesh
           position={[hover.anchorX + w / 2, 0.025, hover.anchorZ + d / 2]}
           rotation={[-Math.PI / 2, 0, 0]}

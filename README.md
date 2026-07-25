@@ -12,9 +12,9 @@ You start with an empty plot of land, a modest pile of cash and an uncomfortable
 
 | | |
 |---|---|
-| **Current phase** | 🟡 **Phase 1 — Foundation: code complete** (remaining: Vercel deploy + real-GPU perf pass) |
-| **Next step** | Phase 2 — The Living Park (see [ROADMAP.md](./ROADMAP.md)) |
-| **Playable build** | ✅ v0.1.0 — build paths, scenery & stalls in a living day/night world; saves, undo, export |
+| **Current phase** | 🟡 **Phase 2 — The Living Park: code complete** (remaining: real-GPU perf pass, Phase-5 balance tuning) |
+| **Next step** | Phase 3 — Coasters & Chaos (see [ROADMAP.md](./ROADMAP.md)) |
+| **Playable build** | ✅ v0.2.0 — a living park: guests with needs & opinions, 6 animated rides, working stalls, economy, rating & milestones |
 | **Target platform** | Desktop browser (1280px+), deployed on Vercel |
 | **Mode** | Single-player guided sandbox. Post-1.0: friend leaderboard (no accounts) |
 

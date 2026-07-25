@@ -29,6 +29,7 @@ export function EntitiesLayer() {
     const byModel = new Map<ModelAssetId, PlacementItem[]>();
     for (const entity of sim.world.placeables.values()) {
       const def = getPlaceableDef(entity.defId);
+      if (!def.model) continue; // rides render via RideLayer components
       const assetId = toModelAssetId(def.model);
       const [w, d] = rotatedFootprint(def, entity.rot);
       let group = byModel.get(assetId);
