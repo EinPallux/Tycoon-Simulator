@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+/*
+ * Wanderpark design tokens — UI_UX_DESIGN.md §3 ("Park Hero" system).
+ * Every component styles itself from these; ad-hoc hex values are a lint smell.
+ */
+@theme {
+  /* Ink & paper */
+  --color-ink-900: #1b2233;
+  --color-ink-800: #232d45;
+  --color-ink-700: #2c3a52;
+  --color-ink-600: #3a4a68;
+  --color-paper-050: #f4f6fb;
+  --color-paper-100: #e8ecf6;
+  --color-paper-200: #d8def0;
+  --color-lavender-200: #c9cfea;
+  --color-lavender-300: #aeb6dd;
+
+  /* Accent (the ONE loud color per screen) */
+  --color-accent-400: #ffc233;
+  --color-accent-500: #ffb300;
+  --color-accent-600: #f09000;
+
+  /* Category cards */
+  --color-card-blue: #2e5ae8;
+  --color-card-teal: #00a8a8;
+  --color-card-magenta: #d6337a;
+  --color-card-green: #2fa84f;
+  --color-card-purple: #7b4fd0;
+  --color-card-orange: #f2742c;
+
+  /* Status */
+  --color-danger-500: #e5484d;
+  --color-danger-600: #c73a3f;
+  --color-info-400: #4fc3f7;
+  --color-good-500: #2fa84f;
+
+  /* Typography (families injected by next/font in layout.tsx) */
+  --font-display: var(--font-big-shoulders), "Arial Narrow", sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+
+  /* Motion */
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+/* ── Base ────────────────────────────────────────────────────────────── */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink-900);
+  background: var(--color-ink-900);
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-accent-500);
+  color: var(--color-ink-900);
+}
+
+/* ── Shared component classes (UI kit) ───────────────────────────────── */
+
+/* The signature skew. Content inside gets .unskew to stay upright. */
+.skewed {
+  transform: skewX(-6deg);
+}
+.unskew {
+  transform: skewX(6deg);
+}
+
+/* Big italic caps display type */
+.display-hero {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.92;
+}
+
+/* Diagonal ray texture used inside vibrant cards (refs 1–2) */
+.rays {
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgb(255 255 255 / 0.13) 0 18px,
+    rgb(255 255 255 / 0) 18px 44px
+  );
+}
+
+/* Faceted app background (refs 4, 6–8) */
+.facet-field {
+  background-color: var(--color-ink-900);
+  background-image:
+    linear-gradient(160deg, rgb(46 90 232 / 0.16), rgb(123 79 208 / 0.1) 55%, transparent),
+    linear-gradient(115deg, rgb(201 207 234 / 0.06) 0 30%, transparent 30%),
+    linear-gradient(295deg, rgb(201 207 234 / 0.05) 0 22%, transparent 22%),
+    radial-gradient(1100px 500px at 85% -10%, rgb(79 195 247 / 0.14), transparent);
+}
+.facet-field-light {
+  background-color: var(--color-lavender-200);
+  background-image:
+    linear-gradient(160deg, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 60%),
+    linear-gradient(115deg, rgb(255 255 255 / 0.35) 0 28%, transparent 28%),
+    linear-gradient(295deg, rgb(27 34 51 / 0.05) 0 20%, transparent 20%);
+}
+
+/* Soft floating-panel shadow */
+.panel-shadow {
+  box-shadow: 0 8px 24px rgb(27 34 51 / 0.35);
+}
+.panel-shadow-light {
+  box-shadow: 0 8px 24px rgb(27 34 51 / 0.15);
+}
+
+/* Accent slash underline for headers */
+.slash-underline {
+  position: relative;
+}
+.slash-underline::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  bottom: -10px;
+  width: 84px;
+  height: 6px;
+  background: var(--color-accent-500);
+  transform: skewX(-30deg);
+}
+
+/* Thin scrollbars that fit the theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-600) transparent;
+}
+
+/* Reduced motion: kill transitions globally when requested */
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+}
+
+/* Keyboard focus */
+:focus-visible {
+  outline: 3px solid var(--color-info-400);
+  outline-offset: 2px;
+}
+
+/* Number readouts never jitter */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

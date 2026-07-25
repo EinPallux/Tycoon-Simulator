@@ -1,4 +1,4 @@
-# 🎢 Park Mogul *(working title)*
+# 🎢 Wanderpark
 
 > **Build the park of your dreams. Survive the business behind it.**
 
@@ -12,13 +12,22 @@ You start with an empty plot of land, a modest pile of cash and an uncomfortable
 
 | | |
 |---|---|
-| **Current phase** | 🟡 **Phase 0 — Planning complete, awaiting green-light to code** |
-| **Next step** | Phase 1 — Foundation (see [ROADMAP.md](./ROADMAP.md)) |
-| **Playable build** | none yet |
+| **Current phase** | 🟡 **Phase 1 — Foundation: code complete** (remaining: Vercel deploy + real-GPU perf pass) |
+| **Next step** | Phase 2 — The Living Park (see [ROADMAP.md](./ROADMAP.md)) |
+| **Playable build** | ✅ v0.1.0 — build paths, scenery & stalls in a living day/night world; saves, undo, export |
 | **Target platform** | Desktop browser (1280px+), deployed on Vercel |
-| **Mode** | Single-player. Post-1.0: friend leaderboard (no accounts) |
+| **Mode** | Single-player guided sandbox. Post-1.0: friend leaderboard (no accounts) |
 
-> ⚠️ **No code is written until the project owner explicitly says "start coding".** This is a hard rule — see [CLAUDE.md](./CLAUDE.md).
+## 🚀 Run it
+
+```bash
+pnpm install
+pnpm assets     # once (and after changing the asset manifest): builds optimized models
+pnpm dev        # → http://localhost:3000
+```
+
+Quality gates: `pnpm typecheck && pnpm lint && pnpm test && pnpm build` · e2e: `pnpm e2e` (needs a build + Chromium).
+**Deploy:** import the repo on [vercel.com/new](https://vercel.com/new) — zero config (committed `public/assets` ship with the build).
 
 ---
 
@@ -46,7 +55,7 @@ Every document has a single owner-topic. If information conflicts, the more spec
 - **Simulate**: hundreds of autonomous guests with needs (hunger, thirst, fun, energy, bladder), moods and thought bubbles. They queue, ride, snack, complain and pay.
 - **Manage**: ticket & stall pricing, staff (mechanics, janitors, entertainers), research, marketing, loans and cash flow.
 - **Survive**: breakdowns, rainstorms, litter spirals, safety inspections, heatwaves, loan interest and bankruptcy.
-- **Progress**: park rating, milestones, research unlocks, 8 scenarios + sandbox, achievements.
+- **Progress**: one open **guided sandbox** (no forced campaign — ever): park rating, milestone tiers, research unlocks, optional dynamic goals ("Opportunities"), achievements. You choose how to make money and grow.
 - **Compare** *(post-1.0)*: an opt-in, no-account leaderboard of park value among friends.
 
 Full design: [GAME_DESIGN.md](./GAME_DESIGN.md)
@@ -66,7 +75,7 @@ Full design: [GAME_DESIGN.md](./GAME_DESIGN.md)
 | 1 | **Foundation** | App shell (title/hub/settings/saves), 3D world, camera, grid, full build system, asset pipeline |
 | 2 | **The Living Park** | Guest simulation, economy v1, time controls, park rating, HUD & management panels |
 | 3 | **Coasters & Chaos** | Modular coaster builder, staff, breakdowns, research, loans, weather, events |
-| 4 | **Progression & Polish** | Scenarios, tutorial, achievements, theming sets, audio, juice, performance pass |
+| 4 | **Progression & Polish** | Opportunities engine, Guided Start onboarding, achievements, theming sets, audio, juice, performance pass |
 | 5 | **Release 1.0** | Balancing, difficulty modes, sandbox, accessibility, QA, deploy hardening |
 | 6 | **Beyond** *(very last)* | Friend leaderboard (no accounts), post-release backlog |
 

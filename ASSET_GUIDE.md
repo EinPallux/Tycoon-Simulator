@@ -1,4 +1,4 @@
-# ASSET_GUIDE.md — Park Mogul
+# ASSET_GUIDE.md — Wanderpark
 
 Owns: what's in `assets/`, licensing, how kits map to game content, import conventions, and sourcing rules for new assets. The machine-readable twin of this document is the pipeline manifest (`tools/asset-pipeline/manifest.source.ts`, Phase 1+).
 
@@ -78,7 +78,7 @@ Everything a theme park needs to bootstrap:
 | Scenery: Winter set | HolidayKit | |
 | Plazas, lamps, urban furniture | CityKitRoads/Suburban/Commercial + FurnitureBits | lamps, hydrants, signs |
 | Petting-zoo props / mascots (backlog) | CubePets | post-1.0 candy |
-| Skyboxes (day/night cycle) | Kenney Skyboxes | morning/day/night crossfade |
+| Skyboxes (day/night cycle) | Kenney Skyboxes | shipped by the pipeline; v1 renders a procedural gradient dome instead (continuous dawn/dusk blending — `TECHNICAL_ARCHITECTURE.md §8`), panoramas reserved for future weather/mood variants |
 | Emote bubbles | EmotesPack | billboarded sprites |
 | UI patterns/rays/facets | PatternPack + generated SVG | `UI_UX_DESIGN.md §3.3` |
 | Greybox/prototyping | PrototypeKit | dev-only, never ships |

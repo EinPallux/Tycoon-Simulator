@@ -31,7 +31,7 @@ This file is for **any AI agent** (Claude Code, subagents, other tools) contribu
 Safe split boundaries (low merge-conflict risk):
 - `src/sim/**` (simulation) vs `src/render/**` (3D) vs `src/ui/**` (React DOM) vs `tools/**` (asset pipeline).
 - Within UI: distinct screens/panels are independent (shared primitives land first).
-- Content authoring (balance tables, ride/stall/scenery catalogs, scenario definitions) is data-only and safe to parallelize once schemas exist.
+- Content authoring (balance tables, ride/stall/scenery catalogs, Opportunity templates) is data-only and safe to parallelize once schemas exist.
 
 Contract-first rule: when two agents share a boundary, the **types/interfaces land first** (one small commit), then both sides build against them.
 
@@ -62,8 +62,8 @@ Use these role lenses when splitting work. Each role lists its home directories,
 - **Guardrails:** CC0 only + license registered; meshopt-compressed GLB output; consistent scale/origin per §6 conventions; per-model manifest overrides instead of runtime hacks; keep shipped asset weight within budget.
 
 ### 📐 Game Designer / Balancer
-- **Owns:** balance tables, ride/stall/scenery catalogs, scenarios, research tree, achievements, all player-facing copy.
-- **Docs:** `GAME_DESIGN.md` (canonical), scenario specs.
+- **Owns:** balance tables, ride/stall/scenery catalogs, Opportunity templates, research tree, achievements, all player-facing copy.
+- **Docs:** `GAME_DESIGN.md` (canonical).
 - **Guardrails:** every number lives in one balance module, mirrored in the doc; tone guide §14 for all copy; changes come with a "why" note; playtest notes recorded in `ROADMAP.md` backlog when they spawn work.
 
 ### 🔍 QA / Release Engineer

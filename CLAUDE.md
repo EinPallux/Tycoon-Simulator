@@ -6,17 +6,22 @@ This file is the **canonical operating manual** for anyone (human or AI) working
 
 ## 1. What this project is
 
-**Park Mogul** *(working title)* — a polished single-player 3D theme-park tycoon game for the browser (Planet Coaster / Aquapark Tycoon spirit), built on Next.js + React Three Fiber + a pure-TS simulation core, deployed on Vercel. Low-poly CC0 assets (Kenney/KayKit), UI styled after the Overwatch/Marvel Rivals references in `uiinspo/`.
+**Wanderpark** — a polished single-player 3D theme-park tycoon game for the browser (Planet Coaster / Aquapark Tycoon spirit), built on Next.js + React Three Fiber + a pure-TS simulation core, deployed on Vercel. Low-poly CC0 assets (Kenney/KayKit), UI styled after the Overwatch/Marvel Rivals references in `uiinspo/`. One mode only: a **guided sandbox** (no authored campaign — owner decision); guidance comes from milestones, research, optional Opportunities and advisor hints.
 
 **Design north star:** every session should feel satisfying — tight feedback loops, visible progress, playful tone, zero friction. "Up to the quality of a modern Steam tycoon game" is the bar for polish, onboarding and UX.
 
 ---
 
-## 2. ⛔ Current gate: PLANNING ONLY
+## 2. ✅ Gate: OPEN — Phase 1 in progress
 
-> **The project owner has not yet said "start coding". Until they explicitly do, do NOT write application code, scaffold projects, or add dependencies. Documentation-only changes are allowed.**
+> The owner green-lit coding on 2026-07-25 ("Start Coding"). Work follows the
+> Phase 1 checklist in `ROADMAP.md`. Dev commands:
 >
-> When the owner green-lights coding, update this section to `Gate: OPEN — Phase N in progress` in the same commit that scaffolds the app.
+> ```
+> pnpm dev         # run locally
+> pnpm assets      # rebuild optimized models + typed manifest from assets/
+> pnpm typecheck && pnpm lint && pnpm test && pnpm build   # quality gates
+> ```
 
 ---
 
@@ -108,6 +113,8 @@ Plus a 2-minute smoke play: boot → hub → load park → place path + stall �
 | **Stall** | Shop/facility (food, drink, souvenir, toilets, info) |
 | **Park rating** | 0–1000 composite score of park quality (`GAME_DESIGN.md §9`) |
 | **Tick** | One simulation step; 10/s at 1× speed |
-| **Scenario** | Curated start + objectives; **Sandbox** = free play |
+| **Guided sandbox** | The one game mode: free play with optional guidance |
+| **Opportunity** | Optional dynamic goal with a reward (`GAME_DESIGN.md §13`) |
+| **Guided Start** | Optional Penny onboarding checklist in a new park |
 | **Advisor (Penny)** | Tutorial/tips character |
 | **Milestone** | Named progression reward tier (guest count / rating) |

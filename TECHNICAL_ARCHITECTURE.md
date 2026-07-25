@@ -1,4 +1,4 @@
-# TECHNICAL_ARCHITECTURE.md — Park Mogul
+# TECHNICAL_ARCHITECTURE.md — Wanderpark
 
 The engineering spec. Owns: stack, structure, simulation, rendering, state, saves, performance, testing, deployment. Gameplay rules live in `GAME_DESIGN.md`; visual specs in `UI_UX_DESIGN.md`.
 
@@ -57,7 +57,7 @@ Version policy: pin latest stable of each at Phase 1 scaffold time; upgrade deli
     ├── render/                  # R3F scene: instanced meshes, camera rig, picking, ghosts, vfx, day-night
     ├── ui/                      # DOM UI: design-system primitives, HUD, panels, screens, tutorial
     ├── audio/                   # AudioBus, sound registry
-    ├── content/                 # data catalogs: rides, stalls, scenery, research, scenarios, achievements
+    ├── content/                 # data catalogs: rides, stalls, scenery, research, goals (Opportunities), achievements
     └── shared/                  # types, ids, math, rng, event-bus — importable by all layers
 ```
 
@@ -111,7 +111,7 @@ Version policy: pin latest stable of each at Phase 1 scaffold time; upgrade deli
 
 ## 7. Content-as-data
 
-Every ride/stall/scenery/research/scenario/achievement is a typed record in `src/content/*` (validated by Zod schemas at build + test time):
+Every ride/stall/scenery/research/goal/achievement is a typed record in `src/content/*` (validated by Zod schemas at build + test time):
 
 ```ts
 // content/rides/carousel.ts (illustrative)
@@ -130,13 +130,13 @@ New content requires **no engine changes** — this is the expandability contrac
 
 ## 8. Rendering architecture
 
-- **Instancing-first:** every model that can appear >10× (path tiles, queue pieces, trees, fences, benches, track pieces, guests) renders via `InstancedMesh` keyed by asset id; per-instance color tint for variation. Add/remove through a freelist wrapper (`InstancePool`) — never rebuild arrays per frame.
+- **Instancing-first:** every model that can appear >10× (path tiles, queue pieces, trees, fences, benches, track pieces, guests) renders via `InstancedMesh` keyed by asset id; per-instance color tint for variation. *v1 sync strategy:* instance lists re-derive from world state on a `worldVersion` bump — edit-rate work, never per-frame (a whole built scene renders in ~17 draw calls). The event-driven freelist wrapper (`InstancePool`, no full rebuilds) is the Phase-4 hardening step if edit-rate rebuilds ever show up in profiles.
 - **Guests:** low-poly Kenney characters as instanced meshes with a **procedural walk/bob** (shader-based vertex sway + emote sprite above head) instead of skeletal animation for the crowd; the *inspected/followed* guest swaps to a full skinned clone with real animation. Target 500 crowd instances.
 - **Static batching:** completed coaster tracks and dense scenery clusters get merged geometry snapshots when "dirty→clean" (rebuild on edit, amortized).
-- **Picking:** GPU id-buffer picking (color-coded instance ids rendered to a small offscreen target) — precise, O(1) per click, works with instancing.
+- **Picking:** three.js `InstancedMesh` raycast picking (instanceId → entity) — simple and fast at Phase-1/2 scale. A GPU id-buffer pass (color-coded instance ids to an offscreen target) is the planned upgrade if profiling ever shows raycast cost at 5k+ pieces.
 - **Camera rig:** RTS-style — pan (edge/WASD/drag), orbit, zoom-to-cursor with height-eased pitch, 45°-snap option, follow-guest mode, coaster onboard cam. Constrained to park bounds + min/max zoom.
 - **Ghost previews:** dedicated transparent-material layer fed by the same validation function as the sim (§6).
-- **Lighting/day-night:** one directional sun + ambient, color-graded by time-of-day curve; Kenney skybox crossfade (morning/day/night); shadows: single cascade, static-only casters, quality-tiered in settings.
+- **Lighting/day-night:** one directional sun (shadow-casting) + hemisphere/ambient fill, driven per-frame by a time-of-day palette curve; sky is a **procedural gradient dome shader** (zenith/horizon stops + sun disc) so dawn/dusk blend continuously — chosen over the static Kenney panoramas, which remain in the pipeline for future weather looks. Fog tracks the horizon color; unlit custom shaders (ground) follow a shared `daylight` scalar.
 - **VFX:** GPU particle sprites (coins, dust, confetti, smoke, fireworks) via a pooled points system; never DOM.
 - **Postprocessing budget:** none by default; optional subtle bloom+vignette behind a "Fancy" toggle (must hold 60 fps or auto-off).
 
@@ -146,7 +146,7 @@ New content requires **no engine changes** — this is the expandability contrac
 
 - **Format:** versioned JSON: `{ formatVersion, appVersion, seed, simTime, world, entities, economy, meta, commandLogTail }`, gzip-compressed (`CompressionStream`) → IndexedDB (`idb-keyval`), one key per slot + rolling autosave (every game day, keep 3).
 - **Migrations:** pure functions `migrate_vN_to_vN+1`; loader chains them; every schema change ships its migration + a fixture test (old save file in `src/sim/save/__fixtures__/`).
-- **Export/import:** the same payload as a downloadable `.parkmogul.json` (schema-validated on import with friendly errors) — backup + friend-sharing without accounts.
+- **Export/import:** the same payload as a downloadable `.wanderpark.json` (schema-validated on import with friendly errors) — backup + friend-sharing without accounts.
 - **Corruption safety:** write-then-swap (never overwrite the only copy), checksum field, "recover previous autosave" UI path.
 - **Settings/profile:** small separate keys (settings, profile, achievements) — never entangled with park saves.
 
@@ -209,7 +209,7 @@ Perf overlay (`F3`): fps, tick ms per system, draw calls, instances, heap — sh
 
 ## 15. Post-1.0: leaderboard backend (the very last step)
 
-- **Storage:** Vercel Postgres (Neon). Tables: `boards(code, created_at)`, `entries(board_code, player_name, avatar_color, park_value, rating, guests, medals, difficulty, checksum, client_version, created_at)`.
+- **Storage:** Vercel Postgres (Neon). Tables: `boards(code, created_at)`, `entries(board_code, player_name, avatar_color, park_value, rating, guests, milestone_tier, achievements, difficulty, checksum, client_version, created_at)`.
 - **API routes:** `POST /api/board` (create → friendly code e.g. `SUNNY-LLAMA-42`), `POST /api/board/:code/submit`, `GET /api/board/:code` (top N + around-me). Zod-validated, rate-limited (IP + board), size-capped.
 - **No accounts:** identity = profile name + locally-kept random submission token (lets you update *your* row, nothing else).
 - **Integrity (best-effort, honesty-system acknowledged):** submission includes seed + command-log digest + stat plausibility checks server-side (value/time envelopes); flagged rows render with a 🌱 "unverified" leaf instead of being rejected. Fun > forensics for a friends board.

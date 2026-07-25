@@ -1,4 +1,4 @@
-# UI_UX_DESIGN.md — Park Mogul
+# UI_UX_DESIGN.md — Wanderpark
 
 The visual & interaction spec. Derived directly from the 11 references in `uiinspo/` (Overwatch menus & HUD: images 1–5; Marvel Rivals career/hero/battle-pass/shop: images 6–11). Every screen and component below is built from the tokens in §3 — no ad-hoc styling.
 
@@ -99,7 +99,7 @@ Line-weight-bold flat SVG icons (Lucide base + custom game set: ride categories,
 | `Slider` | Price/interval sliders w/ value bubble + min/max hints (Overwatch options rows, ref 4) |
 | `Toggle/Segmented` | For settings rows on light wells |
 | `Toast` | Bottom-right stack; Penny variant with portrait slot; auto-dismiss + hover-pin |
-| `Modal` | Rare (destructive confirm, scenario end); skewed sheet on dim veil |
+| `Modal` | Rare (destructive confirm, milestone tier & park-over sheets); skewed sheet on dim veil |
 | `Tooltip` | 250 ms delay, rich body (title, rule-of-thumb line, numbers) |
 | `Checklist` | Tutorial/objective tracker; ticks animate with confetti tick |
 | `DataTable` | Sortable (rides list, finances); zebra `paper-100` rows |
@@ -115,14 +115,14 @@ Boot (logo pulse, asset warm-up)
      └─ HUB (tab shell)
          ├─ CONTINUE (hero card w/ park thumbnail)
          ├─ MY PARKS (save slots: load/rename/duplicate/export/import/delete)
-         ├─ NEW PARK (Scenarios grid ▸ detail ▸ difficulty | Sandbox configurator)
+         ├─ NEW PARK (park configurator: name · map size · funds/debt · difficulty · Guided Start · Freeplay unlocks)
          ├─ ACHIEVEMENTS (badge grid + progress)
          ├─ RECORDS (personal stats; LEADERBOARD tab post-1.0)
          ├─ SETTINGS (Video/Audio/Controls/Gameplay/Accessibility tabs)
          └─ CREDITS (auto-generated from asset manifest)
      └─ LOADING (park name + tip + progress slash)
          └─ IN-GAME (HUD §7) ⇄ Pause veil (Resume/Save/Settings/Photo/Exit)
-             └─ Scenario end sheet (medals, stats roll-up, Next/Stay)
+             └─ Milestone tier sheet (stats roll-up, Continue) · Park-over sheet (repossession)
 ```
 
 Title screen is DOM-only (fast LCP, `TECHNICAL_ARCHITECTURE.md §12`) over a slow diagonal-pan park beauty render (pre-baked video/imagery until real park exists).
@@ -132,7 +132,7 @@ Title screen is DOM-only (fast LCP, `TECHNICAL_ARCHITECTURE.md §12`) over a slo
 ## 6. Hub screens (key specs)
 
 - **Layout:** Rivals-style: dark `TabStrip` top; content on lavender facet field; one hero element per tab.
-- **NEW PARK / Scenarios:** `CategoryCard` grid (one color per scenario, medal pips earned, lock badges with unlock hint). Detail view: objectives list (bronze/silver/gold), twist description, difficulty segmented control, big accent **START** (ref 2's card row + ref 9's detail pane).
+- **NEW PARK (configurator):** a single Rivals-style detail pane (ref 9): park-name field with generate-dice, map size as three `CategoryCard`s (S/M/L with tile counts), funds/debt preset segmented control, difficulty segmented control with modifier tooltips, `Guided Start` and `Freeplay unlocks` toggles with one-line explanations, big accent **BUILD IT** button. No mode select — the guided sandbox is the game.
 - **MY PARKS:** rows = park thumbnail, name, value, rating, last played; actions inline; import drops a file anywhere on the screen ("drop save to import" dashed slash).
 - **SETTINGS:** Overwatch options anatomy (ref 4): left tab rail, rows of label + control on light wells, footer `RESTORE DEFAULTS`; every row has a tooltip; changes apply live with Undo toast.
 
@@ -158,7 +158,7 @@ Corners busy, center sacred (ref 5). Every HUD cluster hides in Photo mode.
 Cash (tabular, coin-pop deltas fly into it), guest count, park rating chip (with trend arrow; click → Rating panel), date/time-of-day dial, weather icon (click → forecast strip), speed control `⏸ 1× 2× 3×` (keys `Space,1,2,3`).
 
 ### 7.3 Objective chip (top-center)
-The current scenario objective / nearest milestone with progress slash; click → objectives panel. This is the "one more minute" surface (`GAME_DESIGN.md §2`).
+The most-progressed active Opportunity / nearest milestone with progress slash; click → Goals panel (active Opportunities + current offer + milestone track). This is the "one more minute" surface (`GAME_DESIGN.md §2, §13`).
 
 ### 7.4 Notification rail (right)
 Skewed toast cards: breakdown (orange, click→jump camera), milestone (gold, fanfare), guest-trend ("12 guests: too expensive!"), event warnings. Grouped, rate-limited, all click-to-locate.
@@ -169,7 +169,7 @@ The signature control. A skewed dock of 7 `CategoryCard` minis: **Paths · Coast
 ### 7.6 Panels (left dock, one at a time, `Tab` cycles)
 - **Ride/Stall inspector:** header (name, rename, open/close toggle), stats blocks (excitement/intensity/nausea dials, queue, uptime, age), price slider with "guest verdict" hint, reliability meter + inspection interval, income sparkline, actions (renovate, move, demolish).
 - **Guest inspector:** §5.5 of GAME_DESIGN — portrait, mood dial, needs meters, wallet, thought log, follow button.
-- **Park panel (tabs):** Finances (P&L table + charts, loans w/ big scary interest row), Guests (aggregate thoughts, demographics), Rides (DataTable), Staff (roster, hire cards, zone paint button), Rating (five-term breakdown w/ hints), Research (4-branch tree, node cards w/ progress slash), Marketing (campaign cards).
+- **Park panel (tabs):** Goals (active Opportunities + offer + milestone track), Finances (P&L table + charts, loans w/ big scary interest row), Guests (aggregate thoughts, demographics), Rides (DataTable), Staff (roster, hire cards, zone paint button), Rating (five-term breakdown w/ hints), Research (4-branch tree, node cards w/ progress slash), Marketing (campaign cards).
 - **Coaster builder panel:** piece palette (family-filtered), constraint readouts (slope/radius), live stat preview dials, test-run controls (run/onboard cam/abort), train config, cost ticker, CLOSE CIRCUIT accent button.
 
 ### 7.7 In-world overlays
@@ -178,7 +178,7 @@ Emote bubbles (billboarded, distance-faded, density-capped), zone banners, queue
 ---
 
 ## 8. Onboarding UI
-Tutorial checklist docks top-left under the top bar (Checklist component); Penny toasts bottom-left with portrait + one sentence + optional "Show me" (camera flies + target element pulses). First-time-topic explainers reuse the same toast with a "Got it, don't repeat" ghost button. All skippable from the first second (`GAME_DESIGN.md §12`).
+The Guided Start checklist docks top-left under the top bar (Checklist component); Penny toasts bottom-left with portrait + one sentence + optional "Show me" (camera flies + target element pulses). First-time-topic explainers reuse the same toast with a "Got it, don't repeat" ghost button. All skippable from the first second (`GAME_DESIGN.md §12`).
 
 ---
 
