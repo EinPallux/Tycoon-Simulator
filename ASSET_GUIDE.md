@@ -1,4 +1,4 @@
-# ASSET_GUIDE.md — Park Mogul
+# ASSET_GUIDE.md — Wanderpark
 
 Owns: what's in `assets/`, licensing, how kits map to game content, import conventions, and sourcing rules for new assets. The machine-readable twin of this document is the pipeline manifest (`tools/asset-pipeline/manifest.source.ts`, Phase 1+).
 

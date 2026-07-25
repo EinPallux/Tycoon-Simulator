@@ -1,48 +1,27 @@
-# OPEN_QUESTIONS.md — Decisions for the Project Owner
+# OPEN_QUESTIONS.md — Decision Log
 
-Planning is complete and internally consistent, but a few calls are yours. **Each question ships with the default I've assumed** — if you say nothing, the default stands and development can proceed without pause. Answer any of these in a normal message; docs get updated accordingly.
-
----
-
-## Q1 — Theme confirmation 🎢 *(the big one)*
-
-The docs commit to a **classic theme/amusement park** (coasters, flat rides, food stalls, themed zones). The asset evidence made this call: CoasterKit alone provides 5 coaster track families *plus* paths, queues, stalls, stations and a park entrance, and the themed kits (Pirate/Space/Castle/Spooky/Winter) map perfectly to Planet-Coaster-style zones.
-
-- **Default (assumed): Theme park.**
-- Alternatives the same architecture supports if you'd rather: waterpark-focused (leans MarbleKit/flume; weaker asset coverage), or a hybrid "park with waterpark district" as post-1.0 expansion.
-
-## Q2 — Game title 🏷
-
-- **Default (assumed): “Park Mogul”** as *working title* — used in docs, easy to replace project-wide before Phase 4 (branding/title screen art lands there). Alternatives brainstormed: *Coaster Kingdom, Parkline, Wonderfield, Funfair Empire, Loop & Ledger*. No trademark search done yet — before 1.0 we should sanity-check the final name.
-
-## Q3 — Tone of failure 🎭
-
-Docs specify family-safe comedy: rides *malfunction* (smoke, springs, grumpy guests) but never crash/harm anyone; bankruptcy is firm-but-kind (`GAME_DESIGN.md §14`).
-
-- **Default (assumed): family-safe comedic.** If you want darker RCT-style edge (crashes, injuries), say so — it changes VFX, copy, and content-safety posture.
-
-## Q4 — Platform posture 🖥
-
-- **Default (assumed): desktop-first** (min 1280px, mouse+keyboard), tablet best-effort, phones get a friendly "bigger screen" splash. Full touch/mobile support is a large extra scope — flag it now if it matters to you and I'll add a phase.
-
-## Q5 — Coaster builder ambition 🎢
-
-Chosen scope: grid-snapped modular pieces (the kits' shapes) with computed stats — deep but tractable. Planet-Coaster-style freeform splines are out (incompatible with the kit pieces and a huge cost).
-
-- **Default (assumed): modular piece-based builder.** Confirm you're happy that coasters feel like "RCT-in-3D", not freeform sculpting.
-
-## Q6 — Scenario count & campaign shape 📚
-
-- **Default (assumed): 8 scenarios + sandbox at 1.0** (`GAME_DESIGN.md §13`), linear-ish unlock (finish bronze to unlock next). More scenarios post-1.0. Tell me if you want a bigger/smaller campaign or fully-open scenario select.
-
-## Q7 — Language 🌍
-
-- **Default (assumed): English-only at 1.0**, but every string lives in a message catalog so adding German (guessing from your setup 😉) later is data-entry, not surgery. Say the word if German should ship *at* 1.0.
-
-## Q8 — Music sourcing 🎵
-
-- **Default (assumed):** CC0 music/SFX (Kenney Audio + curated CC0 sources) selected in Phase 4. If you have licensed tracks or a specific vibe (chiptune vs orchestral-lite vs lo-fi), note it before Phase 4.
+All Phase-0 questions have been **answered by the project owner** (2026-07-25). This file now serves as the decision log; new questions get appended to the "Open" section below with a recommended default, so work never stalls on them.
 
 ---
 
-*When you're happy with the plan: say **"start coding"** (optionally with answers to any of the above) and Phase 1 — Foundation begins per `ROADMAP.md`.*
+## ✅ Decided
+
+| # | Question | Owner decision | Where it's reflected |
+|---|---|---|---|
+| Q1 | Theme | **Theme park** confirmed | everywhere |
+| Q2 | Title | **Wanderpark** (final; trademark sanity-check before 1.0 still advised) | all docs, `.wanderpark.json` save extension |
+| Q3 | Tone of failure | **Family-safe comedic** — malfunctions & repossession comedy, no harm ever | `GAME_DESIGN.md §6.3, §8, §14` |
+| Q4 | Platform | **Desktop-first** (min 1280px); tablet best-effort; phone splash | `UI_UX_DESIGN.md §10` |
+| Q5 | Coaster builder | **Modular piece-based** (grid pieces + computed stats; no freeform splines) | `GAME_DESIGN.md §4.6` |
+| Q6 | Campaign shape | **NO set story/campaign.** One **guided sandbox**: free exploration of how to make money and expand, lightly guided | `GAME_DESIGN.md §10.2, §13` (Opportunities + Guided Start + Penny hints), `ROADMAP.md` Phase 4 |
+| Q7 | Language | **English-only** at 1.0 (string catalog still centralized) | `GAME_DESIGN.md §14`, `TECHNICAL_ARCHITECTURE.md §10` |
+| Q8 | Music | **CC0 sourcing** (Kenney Audio + curated), selected in Phase 4 | `ASSET_GUIDE.md §5`, `ROADMAP.md` Phase 4 |
+
+### How Q6 is honored (summary)
+No scenario list, no medals, no forced objectives. The game is one open mode. Guidance = **milestones** (celebration tiers), **research** (player-chosen unlock direction), **Opportunities** (optional generated goals with rewards — decline freely, zero punishment), and **Penny's contextual hints**. The Guided Start tutorial is a toggle on the new-park configurator, produces a real park you keep, and fades away.
+
+---
+
+## ❓ Open
+
+*(none — next expected owner input is the **"start coding"** green-light for Phase 1, per `ROADMAP.md`)*

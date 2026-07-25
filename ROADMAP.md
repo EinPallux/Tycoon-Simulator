@@ -1,4 +1,4 @@
-# ROADMAP.md — Park Mogul
+# ROADMAP.md — Wanderpark
 
 Few phases, each **big and meaningful** (owner's requirement): every phase ends with the game visibly, playably better. Boxes get ticked in the same commit as the work. Acceptance criteria are the phase's definition of done — demonstrable in the running game, not just merged.
 
@@ -24,7 +24,7 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 - [ ] Next.js scaffold (TS strict, pnpm, ESLint+boundaries, Prettier, Vitest, Playwright, CI, Vercel deploy)
 - [ ] Asset pipeline v1: manifest, gltf-transform/meshopt build, typed ids, budget gate, auto-credits data
 - [ ] Design-system kit: tokens, HeroHeader, TabStrip, CategoryCard, Panel, Button, Slider, Toast, Tooltip, Modal (per `UI_UX_DESIGN.md §3–4`)
-- [ ] Screens: Boot → Title → Profile-create → Hub (Continue/My Parks/New Park[sandbox only]/Settings/Credits) → Loading → Game; pause veil; settings persist (video/audio/controls/accessibility basics)
+- [ ] Screens: Boot → Title → Profile-create → Hub (Continue/My Parks/New Park[configurator v1]/Settings/Credits) → Loading → Game; pause veil; settings persist (video/audio/controls/accessibility basics)
 - [ ] 3D world: 128×128 grid, owned-land rendering + fence, CoasterKit park entrance, skybox day/night cycle, lighting, camera rig (pan/orbit/zoom/rotate-snap), perf overlay (F3)
 - [ ] Sim skeleton: fixed-timestep loop, seeded RNG, command dispatch + undo/redo, entity pools, tile bitfields, path graph (no guests yet)
 - [ ] Build system v1: path & queue auto-tiling brushes, scenery placement (≥30 nature/furniture pieces), stall placement (4 CoasterKit stalls as props), ghost validation, rotate, bulldoze+refund, move tool, build dock + category trays
@@ -75,7 +75,7 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 - [ ] Remaining 6 flat rides + walk-through attractions (Mini-Golf, Go-Karts, Railroad, Swan Boats)
 - [ ] Staff: mechanics/janitors/entertainers — hire/fire, wages, patrol zone painting, pathing, skill growth; litter/vomit cleanup loop closes
 - [ ] Breakdowns & maintenance: reliability, inspections, comedic malfunction VFX, repair flow, renovate/aging
-- [ ] Loans & debt: tranches, credit limit, interest accrual, warnings, bankruptcy fail-state (scenario) / asset-auction (sandbox)
+- [ ] Loans & debt: tranches, credit limit, interest accrual, warnings, repossession spiral → "park over" sheet with restart/rewind (`GAME_DESIGN.md §6.3`)
 - [ ] Research: 4 branches × 6 nodes, funding tiers, unlock toasts; content gated accordingly
 - [ ] Weather: sun/cloud/rain/storm/heatwave — spawn & need modifiers, umbrellas/cover behavior, forecast strip
 - [ ] Events v1 (≥6): VIP visit, safety inspection, heatwave rush, litter-rat scare, influencer moment, coaster enthusiast club
@@ -92,14 +92,17 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 
 ## Phase 4 — Progression & Polish
 
-**Goal:** turn the systems sandbox into a *game with a career* — and make every minute feel Steam-release good.
+**Goal:** turn the systems sandbox into a *guided sandbox with a pull* — and make every minute feel Steam-release good.
 
 **Scope**
-- [ ] Scenario framework (start states, objectives bronze/silver/gold, twists, end sheet) + all 8 scenarios (`GAME_DESIGN.md §13`)
-- [ ] Tutorial: scenario 1 with Penny checklist flow + contextual first-time explainers + Park Manual codex
+- [ ] Opportunities engine: template pool (6 categories), state-driven generation, accept/decline/reroll, rewards, Goals panel + objective chip integration (`GAME_DESIGN.md §13`)
+- [ ] Penny hint engine (state-driven, throttled, dismiss-forever topics)
+- [ ] Guided Start: configurator toggle + Penny checklist flow + contextual first-time explainers + Park Manual codex
+- [ ] New-park configurator final: name, map size S/M/L, cash/debt preset, difficulty, Guided Start & Freeplay-unlocks toggles
+- [ ] Milestone tier sheets (stats roll-up celebration) + park-over "repossession" sheet
 - [ ] Theming sets & zones: 6 sets ≥ 60 scenery pieces, zone detection/bonuses/banners/naming
 - [ ] Achievements (~25) + hub badge grid + toasts
-- [ ] Hub completion: Continue thumbnail card, Records tab, scenario select with medals, Credits from manifest
+- [ ] Hub completion: Continue thumbnail card, Records tab, Credits from manifest
 - [ ] Audio v2: music (menu + 3 in-park moods), full SFX pass, mixer settings
 - [ ] Juice pass: every item in `GAME_DESIGN.md §16` (placement dust, demolish confetti, milestone fireworks, rating shimmer…)
 - [ ] Photo mode (free cam, DOF, time slider, stickers, PNG export)
@@ -107,8 +110,8 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 - [ ] Accessibility completion (`GAME_DESIGN.md §18`): colorblind palettes, remapping UI, UI scale, reduced motion/flash, dyslexia font
 
 **Acceptance criteria**
-1. New player completes the tutorial unaided in ≤ 20 min and names, unprompted, what rating/needs/breakdowns mean (hallway test ×3).
-2. All 8 scenarios completable to gold by a dev playthrough; medal state persists; end sheets roll up stats.
+1. New player completes the Guided Start unaided in ≤ 20 min and names, unprompted, what rating/needs/breakdowns mean (hallway test ×3).
+2. Opportunities always offer something sensible for the current park state (audited across early/mid/late fixture parks); declining everything never blocks progress; rewards persist through save/load.
 3. Stress park holds budgets with juice on; worker flag passes the determinism suite.
 4. The game *sounds* alive: blindfold test — you can hear rating rise (crowd swell) and trouble (Penny uh-oh, springs).
 
@@ -119,10 +122,9 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 **Goal:** ship quality. Balance, difficulty, resilience, final QA — the "fully polished, ready to play" bar.
 
 **Scope**
-- [ ] Balancing campaign: soak-driven tuning of §15 tables across all scenarios & difficulties (Relaxed/Classic/Tycoon per-park)
-- [ ] Sandbox configurator final (map size, cash, difficulty, progression toggle)
+- [ ] Balancing campaign: soak-driven tuning of §15 tables across map sizes & difficulties (Relaxed/Classic/Tycoon) and both unlock modes
 - [ ] Save resilience: corruption recovery UX, migration chain tests from every prior phase's fixtures, autosave rotation
-- [ ] Full Playwright regression: onboarding, each panel, save/load/export/import, settings, scenario end
+- [ ] Full Playwright regression: onboarding, each panel, save/load/export/import, settings, milestone & park-over sheets
 - [ ] Error-boundary + diagnostics-copy UX; graceful WebGL-lost recovery
 - [ ] Final content/copy review (tone §14), credits, version stamp, favicon/OG/social card
 - [ ] Performance final gate on reference hardware matrix (incl. integrated GPU + 1280×720)
@@ -131,7 +133,7 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 
 **Acceptance criteria (release checklist)**
 1. Zero known crash/save-loss bugs; all CI suites green; budgets met on the hardware matrix.
-2. Three cold-start hallway testers each: finish tutorial, reach rating 500 in sandbox, and describe the game as "polished" unprompted.
+2. Three cold-start hallway testers each: finish the Guided Start, reach rating 500, and describe the game as "polished" unprompted.
 3. Every doc's spec matches the shipped game (audit pass).
 4. **1.0.0 tagged and live on Vercel.**
 
@@ -144,7 +146,7 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 - [ ] Records tab → Leaderboard: create/join board by code, opt-in submission (name, value, rating, guests, medals, difficulty badge, checksum), around-me view, unverified-🌱 marking
 - [ ] Privacy & abuse posture shipped as specified (no accounts, expiring boards)
 
-**Backlog (unscheduled, ideas parking lot):** terraforming & water, coaster blueprints sharing, security staff + vandals, seasons/holiday events, MarbleKit water-slide theme pack, CubePets petting zoo, mod support via content packs, mobile layout, more scenarios, Steam wrapper (Tauri/Electron) evaluation.
+**Backlog (unscheduled, ideas parking lot):** terraforming & water, coaster blueprints sharing, security staff + vandals, seasons/holiday events, MarbleKit water-slide theme pack, CubePets petting zoo, mod support via content packs, mobile layout, more Opportunity templates & authored challenge parks (only if ever requested — no campaign by owner decision), Steam wrapper (Tauri/Electron) evaluation.
 
 ---
 

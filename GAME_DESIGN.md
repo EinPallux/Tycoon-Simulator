@@ -1,4 +1,4 @@
-# GAME_DESIGN.md — Park Mogul *(working title)*
+# GAME_DESIGN.md — Wanderpark
 
 The complete game design. This document is the **gameplay spec**: if a system ships differently, this file gets updated in the same commit. Balancing values (§15) are *initial targets* — expect tuning, but tune the doc and the code together.
 
@@ -8,7 +8,9 @@ The complete game design. This document is the **gameplay spec**: if a system sh
 
 **You inherit a muddy field and a loan. You leave behind the greatest theme park ever built.**
 
-Park Mogul is a single-player 3D management/building game in the lineage of *RollerCoaster Tycoon*, *Planet Coaster*, *Aquapark Tycoon* and *Two Point Museum*: charming on the surface, a real business simulation underneath. The player alternates between two joys — **creative building** (laying out paths, plazas, themed zones, hand-built coasters) and **systems mastery** (pricing, staffing, research, debt, crisis management). Guests are the connective tissue: visible, opinionated little customers whose thoughts and wallets tell you how you're doing.
+Wanderpark is a single-player 3D management/building game in the lineage of *RollerCoaster Tycoon*, *Planet Coaster*, *Aquapark Tycoon* and *Two Point Museum*: charming on the surface, a real business simulation underneath. The player alternates between two joys — **creative building** (laying out paths, plazas, themed zones, hand-built coasters) and **systems mastery** (pricing, staffing, research, debt, crisis management). Guests are the connective tissue: visible, opinionated little customers whose thoughts and wallets tell you how you're doing.
+
+**There is no authored story or campaign — by design (owner decision).** Wanderpark is a **guided sandbox**: one open mode where the player freely explores whatever strategy makes money and grows the park, gently guided by milestones, research, optional dynamic goals ("Opportunities", §13) and Penny's contextual hints — never railroaded by mandatory objectives.
 
 ### Design pillars
 
@@ -37,19 +39,19 @@ Place a stall near a long queue → guests break off to buy drinks → coins pop
 **Expand → Stress → Stabilize → Milestone.**
 New ride draws a crowd → paths clog, litter spikes, mechanic overworked → hire staff, widen plaza, raise prices → park rating crosses threshold, milestone reward + new unlocks.
 
-### Campaign loop (hours)
-**Scenario objectives → research tree → new park tiers → mastery.**
-Each scenario teaches/tests a different discipline (§13). Sandbox is the infinite canvas. Post-1.0: leaderboard park value chase (§17).
+### Long-game loop (hours)
+**Milestone tiers → research branches → land expansion → new parks & achievements.**
+The guided sandbox has no finish line: the player picks their own trajectory (thrill park? food empire? scenery wonderland?), research chooses what unlocks next, milestones celebrate the climb, Opportunities (§13) offer optional detours, and achievements + additional parks provide fresh starts. Post-1.0: leaderboard park value chase (§17).
 
 ### The "one more minute" hooks
-At almost any moment, at least two of these should be pending: research finishing, milestone within reach, loan nearly paid, ride under construction, event countdown, objective at 80%. The HUD surfaces the nearest hook (see `UI_UX_DESIGN.md §7.3`).
+At almost any moment, at least two of these should be pending: research finishing, milestone within reach, loan nearly paid, ride under construction, event countdown, an Opportunity at 80%. The HUD surfaces the nearest hook (see `UI_UX_DESIGN.md §7.3`).
 
 ---
 
 ## 3. World & park structure
 
 - **World grid:** 128×128 tiles; 1 tile = 2 m. Flat terrain in 1.0 (terraforming is post-1.0 backlog; coasters get verticality via supports and elevated track).
-- **Starting land:** an owned rectangle (scenario-defined, default 44×44) containing the **park entrance** (fixed on the south edge, connected to the outside world by the *approach promenade*).
+- **Starting land:** an owned rectangle (configured at park creation, default 44×44) containing the **park entrance** (fixed on the south edge, connected to the outside world by the *approach promenade*).
 - **Land expansion:** adjacent 8×8 plots purchasable; price escalates per plot owned (§15.6). Plots show ghost fencing + price on hover.
 - **Park boundary:** auto-fence along owned perimeter. Entrance building (CoasterKit `park-entrance`) holds the ticket gates.
 - **In-world clock:** 1 game day = 90 s at 1× speed. Days aggregate into weeks (7 days, finance summary) and months (4 weeks, loan interest + rent-like fixed costs). Day/night lighting cycle runs continuously; park is open all day (guests thin out at night). Seasons are post-1.0.
@@ -133,12 +135,13 @@ Click any guest: portrait, name, mood dial, needs bars, wallet, current goal, th
 Player sets: park entry, per-ride tickets, per-item stall prices. Guests compare price to **perceived value** (ride stats, hunger level, weather for drinks/umbrellas) — overpricing produces refusals + "rip-off" thoughts; free-entry/high-ride-price (pay-per-ride) vs high-entry (all-inclusive feel) are both viable strategies. Price elasticity in §15.5.
 
 ### 6.3 Loans & debt (a pillar of tension)
-- Start most scenarios carrying debt (default: $10,000 at 8%/yr, monthly interest).
+- Every new park starts carrying debt by default ($10,000 at 8%/yr, monthly interest; configurable at creation).
 - Bank offers up to a credit limit = f(park value); each additional tranche costs +1.5% rate.
-- **Debt spiral warning UX:** interest > 25% of weekly profit triggers advisor warnings; missed payments (cash < interest) add penalty fees, −50 park rating, and after 3 consecutive misses → **bankruptcy fail-state** in scenarios (offer restart/rewind-to-autosave). Sandbox: bank seizes and auctions your assets one by one instead (comedic, brutal, recoverable).
+- **Debt spiral warning UX:** interest > 25% of weekly profit triggers advisor warnings; missed payments (cash < interest) add penalty fees and −50 park rating.
+- **Repossession spiral (the fail pressure):** after 3 consecutive missed payments the bank starts seizing and auctioning assets one at a time (comedic, brutal, recoverable — sell-off, refinance and staff cuts can still save you). If the **park entrance** itself is ever seized, the park is over: a firm-but-kind "Bank Owns The Fun Now" sheet with stats roll-up, then restart or rewind-to-autosave. Severity scales with difficulty (§15.7).
 
 ### 6.4 Research (Phase 3)
-Fund a workshop ($/week, 3 speed tiers) to progress one of four branches: **Thrill** (coasters, intense flats), **Family** (gentle rides, entertainment), **Food & Retail** (stall tiers, souvenirs), **Operations** (staff efficiency, marketing tiers, reliability upgrades). ~24 nodes for 1.0 (§11.4). Research is the primary unlock spine in scenarios and sandbox-with-progression mode.
+Fund a workshop ($/week, 3 speed tiers) to progress one of four branches: **Thrill** (coasters, intense flats), **Family** (gentle rides, entertainment), **Food & Retail** (stall tiers, souvenirs), **Operations** (staff efficiency, marketing tiers, reliability upgrades). ~24 nodes for 1.0 (§11.4). Research is the guided sandbox's unlock spine — the player chooses which branch to push, which *is* the "explore what works for you" freedom. (A "Freeplay unlocks" toggle at park creation starts with everything open for pure creative play.)
 
 ### 6.5 Marketing
 4 campaign types (flyers, radio, TV, influencer visit), each: cost, duration, targeted guest-type boost. Diminishing returns; a "marketing hangover" if the park under-delivers on the promise (rating < advertised expectation → temporary appeal dip). Unlocked via Operations research.
@@ -180,8 +183,8 @@ Rating gates milestones (§10.1), drives spawn rate, and is the primary leaderbo
 ### 10.1 Milestones (per park)
 Rating/guest-count thresholds award named tiers (Muddy Field → Local Attraction → Regional Star → National Treasure → World Wonder), each granting a cash bonus + cosmetic flourish (entrance upgrade visual, fireworks) + 1 free research node. Milestone toasts are the session loop's exclamation points.
 
-### 10.2 Scenarios (8 at 1.0) + Sandbox
-Scenario = start state + objective set (bronze/silver/gold) + constraints + twist. Roster in §13. Sandbox = pick map size + starting cash + difficulty; optional "progression mode" keeps research/unlocks on.
+### 10.2 The Guided Sandbox (the one and only mode)
+**No campaign, no mandatory objectives — owner decision.** "New Park" opens the configurator: park name, map size (S/M/L), starting cash & debt preset, difficulty (§15.7), **Guided Start** toggle (§12, default ON for the first-ever park) and **Freeplay unlocks** toggle (default OFF → research progression on). Guidance is ambient, optional and player-serving: milestones (§10.1), Opportunities (§13), Penny's contextual hints, and the rating panel's "what's hurting you" hints. Players find their own path to money and growth — thrill empire, boutique garden park, food-court economy: all viable.
 
 ### 10.3 Theming zones
 ≥8 same-theme scenery pieces within a radius around ≥1 ride forms a **named zone** (player-nameable, auto-suggested: "Pirate Cove"): +excitement to zone rides, +mood to zone guests, zone banner on the map. Drives the Planet-Coaster fantasy of *places*, not just objects, and makes scenery economically rational.
@@ -216,25 +219,36 @@ Nature (NatureKit), Pirate (PirateKit), Space (SpaceKit/ModularSpaceKit), Castle
 
 **Golden rule: teach in context, one sentence at a time, always skippable.**
 
-- **Scenario 1 = the tutorial** ("Greenfield Meadows"): advisor **Penny** (CuteCharacters model, big friendly emotes) walks the player through an objective checklist that mirrors the real loop: build path → place Carousel → connect queue → set price → open park → first 10 guests → place food+drink+toilet → hire janitor → reach rating 300. Each step: short Penny toast + glowing UI target + checklist tick. ~15 minutes.
+- **Guided Start** (a toggle in the park configurator, default ON for the first-ever park, never a separate mode): advisor **Penny** (CuteCharacters model, big friendly emotes) walks the player through a checklist that mirrors the real loop — build path → place Carousel → connect queue → set price → open park → first 10 guests → place food+drink+toilet → hire janitor → reach rating 300. Each step: short Penny toast + glowing UI target + checklist tick. ~15 minutes, skippable at any second, and the park it builds is a *real park the player keeps playing* — the guidance simply fades out.
 - **Contextual first-time tips:** the first breakdown/litter-spiral/loan-warning/storm each triggers a one-time Penny explainer (dismiss forever per topic).
 - **Tooltips everywhere:** every stat, slider and icon has a hover/long-press tooltip with the plain-English rule ("Excitement ↑ spawn rate and queue tolerance").
 - **Codex ("Park Manual")**: searchable in-game reference auto-unlocking articles as systems appear; no mandatory reading.
 
 ---
 
-## 13. Scenario roster (1.0)
+## 13. Opportunities — the "little bit guided" layer
 
-| # | Name | Teaches / Tests | Twist |
-|---|---|---|---|
-| 1 | Greenfield Meadows | Tutorial: build, open, basic needs | none — guarded rails |
-| 2 | Boardwalk Bootstrap | Pricing & stall economy | tiny land, no expansion |
-| 3 | Loan Ranger | Debt management | starts $40k in debt, high interest |
-| 4 | Rustpark Rescue | Renovation, maintenance, staff | inherited aging park, low rating |
-| 5 | Storm Coast | Weather resilience | frequent rain; covered rides shine |
-| 6 | Coaster Canyon | Coaster builder mastery | objectives on built-coaster stats |
-| 7 | Five-Star Fair | Theming & zones | rating 800 with ≥3 themed zones |
-| 8 | Mogul's Gauntlet | Everything, hard mode | events ramp, gold = rating 900 debt-free |
+Optional, dynamic, contextual goals that give direction without ever taking the wheel. This system replaces a scenario campaign (owner decision: guided sandbox only).
+
+### Rules
+- At most **2 active + 1 offered** at a time; a new offer surfaces every 2–4 game-days (rating-scaled).
+- Offers are **generated from current park state** (template + parameter fill), so they always feel like sensible next steps, never homework.
+- Player can **accept, decline, or reroll** (declining is free; offers expire quietly). Accepted Opportunities show on the objective chip and Goals panel with progress.
+- Rewards: cash bonus, free research node, rare cosmetic scenery, temporary buffs (marketing surge). Completion = fanfare + Penny cheer; failure = quiet expiry, zero punishment.
+- Cadence, template pool and reward scaling live in `content/goals/` + `sim/balance/` like all content (`TECHNICAL_ARCHITECTURE.md §7`).
+
+### Template categories & examples
+| Category | Example (parameters auto-filled from park state) |
+|---|---|
+| Growth | "Host **120** guests at once" · "Reach park rating **450**" |
+| Builder | "Open a coaster with excitement ≥ **6.0**" · "Create a themed zone with **8** Pirate pieces" |
+| Economy | "Bank **$8,000** profit in a week" · "Sell **50** burgers in 2 days" |
+| Operations | "Keep cleanliness above **80%** for 3 days" · "Zero breakdowns for a week" |
+| Visitors (flavored) | "A coaster club visits Friday — have **2** coasters open" · "VIP critic incoming: rating **500+** when she arrives" |
+| Care | "Get average guest mood above **75**" · "10 guests leave the park happy in a row" |
+
+### Penny's hint engine (the other half of "guided")
+State-driven, throttled, dismissible-forever-per-topic suggestions: thirst thoughts trending → "A drinks stall near the Wild Mouse would print money right now"; cash idle > $30k → "That savings pile could be a coaster"; rating term lagging → points at the weakest of the five terms. Hints never repeat within 3 game-days and never interrupt building.
 
 ---
 
@@ -285,9 +299,9 @@ Placement thunk + dust puff · demolish confetti of parts · coin-pop on every s
 
 ## 17. Meta, saves & leaderboard (post-1.0)
 
-- **Local profile:** display name + avatar color chosen on first launch (editable; no account, no email). Profile holds achievements, settings, scenario medals.
-- **Saves:** multiple named parks, autosave slot per park, export/import as `.parkmogul.json` file (backup/share). See `TECHNICAL_ARCHITECTURE.md §9`.
-- **Leaderboard (the very last roadmap step):** opt-in submission of headline stats (park value, rating, guests, scenario medals + integrity checksum + difficulty badge) under the profile name to a Vercel-hosted board with friend-group codes ("join board `SUNNY-LLAMA-42`"). No accounts; abuse mitigations in `TECHNICAL_ARCHITECTURE.md §15`.
+- **Local profile:** display name + avatar color chosen on first launch (editable; no account, no email). Profile holds achievements, settings, lifetime records.
+- **Saves:** multiple named parks, autosave slot per park, export/import as `.wanderpark.json` file (backup/share). See `TECHNICAL_ARCHITECTURE.md §9`.
+- **Leaderboard (the very last roadmap step):** opt-in submission of headline stats (park value, rating, guests, milestone tier, achievements count + integrity checksum + difficulty badge) under the profile name to a Vercel-hosted board with friend-group codes ("join board `SUNNY-LLAMA-42`"). No accounts; abuse mitigations in `TECHNICAL_ARCHITECTURE.md §15`.
 
 ---
 
@@ -299,4 +313,4 @@ Color-blind-safe status palettes (never color-only meaning) · full keyboard map
 
 ## 19. Out of scope for 1.0 (explicit)
 
-Terraforming/water-table editing · multiplayer/co-op · ride crashes & injuries · security staff/vandal system · weather beyond sun/cloud/rain/storm/heatwave · seasonal calendar · coaster blueprint sharing · mobile-touch-first layout (desktop-first; tablet best-effort) · mod support (architecture keeps catalogs data-driven to enable it later) · monetization of any kind (free game, forever).
+Authored story/campaign/scenarios (**by owner decision — permanently out unless requested**) · terraforming/water-table editing · multiplayer/co-op · ride crashes & injuries · security staff/vandal system · weather beyond sun/cloud/rain/storm/heatwave · seasonal calendar · coaster blueprint sharing · mobile-touch-first layout (desktop-first; tablet best-effort) · mod support (architecture keeps catalogs data-driven to enable it later) · monetization of any kind (free game, forever).

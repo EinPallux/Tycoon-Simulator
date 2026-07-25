@@ -1,4 +1,4 @@
-# TECHNICAL_ARCHITECTURE.md — Park Mogul
+# TECHNICAL_ARCHITECTURE.md — Wanderpark
 
 The engineering spec. Owns: stack, structure, simulation, rendering, state, saves, performance, testing, deployment. Gameplay rules live in `GAME_DESIGN.md`; visual specs in `UI_UX_DESIGN.md`.
 
@@ -57,7 +57,7 @@ Version policy: pin latest stable of each at Phase 1 scaffold time; upgrade deli
     ├── render/                  # R3F scene: instanced meshes, camera rig, picking, ghosts, vfx, day-night
     ├── ui/                      # DOM UI: design-system primitives, HUD, panels, screens, tutorial
     ├── audio/                   # AudioBus, sound registry
-    ├── content/                 # data catalogs: rides, stalls, scenery, research, scenarios, achievements
+    ├── content/                 # data catalogs: rides, stalls, scenery, research, goals (Opportunities), achievements
     └── shared/                  # types, ids, math, rng, event-bus — importable by all layers
 ```
 
@@ -111,7 +111,7 @@ Version policy: pin latest stable of each at Phase 1 scaffold time; upgrade deli
 
 ## 7. Content-as-data
 
-Every ride/stall/scenery/research/scenario/achievement is a typed record in `src/content/*` (validated by Zod schemas at build + test time):
+Every ride/stall/scenery/research/goal/achievement is a typed record in `src/content/*` (validated by Zod schemas at build + test time):
 
 ```ts
 // content/rides/carousel.ts (illustrative)
@@ -146,7 +146,7 @@ New content requires **no engine changes** — this is the expandability contrac
 
 - **Format:** versioned JSON: `{ formatVersion, appVersion, seed, simTime, world, entities, economy, meta, commandLogTail }`, gzip-compressed (`CompressionStream`) → IndexedDB (`idb-keyval`), one key per slot + rolling autosave (every game day, keep 3).
 - **Migrations:** pure functions `migrate_vN_to_vN+1`; loader chains them; every schema change ships its migration + a fixture test (old save file in `src/sim/save/__fixtures__/`).
-- **Export/import:** the same payload as a downloadable `.parkmogul.json` (schema-validated on import with friendly errors) — backup + friend-sharing without accounts.
+- **Export/import:** the same payload as a downloadable `.wanderpark.json` (schema-validated on import with friendly errors) — backup + friend-sharing without accounts.
 - **Corruption safety:** write-then-swap (never overwrite the only copy), checksum field, "recover previous autosave" UI path.
 - **Settings/profile:** small separate keys (settings, profile, achievements) — never entangled with park saves.
 
@@ -209,7 +209,7 @@ Perf overlay (`F3`): fps, tick ms per system, draw calls, instances, heap — sh
 
 ## 15. Post-1.0: leaderboard backend (the very last step)
 
-- **Storage:** Vercel Postgres (Neon). Tables: `boards(code, created_at)`, `entries(board_code, player_name, avatar_color, park_value, rating, guests, medals, difficulty, checksum, client_version, created_at)`.
+- **Storage:** Vercel Postgres (Neon). Tables: `boards(code, created_at)`, `entries(board_code, player_name, avatar_color, park_value, rating, guests, milestone_tier, achievements, difficulty, checksum, client_version, created_at)`.
 - **API routes:** `POST /api/board` (create → friendly code e.g. `SUNNY-LLAMA-42`), `POST /api/board/:code/submit`, `GET /api/board/:code` (top N + around-me). Zod-validated, rate-limited (IP + board), size-capped.
 - **No accounts:** identity = profile name + locally-kept random submission token (lets you update *your* row, nothing else).
 - **Integrity (best-effort, honesty-system acknowledged):** submission includes seed + command-log digest + stat plausibility checks server-side (value/time envelopes); flagged rows render with a 🌱 "unverified" leaf instead of being rejected. Fun > forensics for a friends board.

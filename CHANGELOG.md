@@ -1,11 +1,28 @@
 # Changelog
 
-All notable changes to **Park Mogul** *(working title)* are documented here.
+All notable changes to **Wanderpark** are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/) (`0.x` until Release 1.0; docs-only era uses `0.0.x`).
 
 ## [Unreleased]
 
 *(empty — awaiting "start coding" green-light for Phase 1)*
+
+## [0.0.2] — 2026-07-25 — Owner decisions locked
+
+### Changed
+- **Name:** the game is officially **Wanderpark** (was working title "Park Mogul"); docs, save-file extension (`.wanderpark.json`) and titles updated project-wide.
+- **No campaign — guided sandbox only** (owner decision): removed the 8-scenario campaign from `GAME_DESIGN.md`/`ROADMAP.md`/`UI_UX_DESIGN.md`. Replaced with:
+  - **Opportunities** — optional, state-generated dynamic goals (2 active + 1 offered, accept/decline/reroll, reward-only, never punishing) — new `GAME_DESIGN.md §13`.
+  - **Guided Start** — the tutorial is now an optional toggle on any new park (default ON for the first park), not a separate scenario.
+  - **New-park configurator** as the single entry point (name, map size, funds/debt preset, difficulty, Guided Start, Freeplay-unlocks toggle).
+  - Unified **repossession spiral** fail pressure (asset seizure → park-over sheet) replacing the scenario bankruptcy fail-state.
+  - Penny hint engine spec (state-driven contextual suggestions) added.
+- Leaderboard submission stats: scenario medals → milestone tier + achievements count.
+- Confirmed by owner: theme park direction, family-safe comedic tone, desktop-first, modular piece-based coaster builder, English-only at 1.0, CC0 audio plan.
+- `OPEN_QUESTIONS.md` converted into a decision log (all 8 questions answered).
+
+### Notes
+- ⛔ Coding gate still closed — awaiting explicit "start coding" (see `CLAUDE.md §2`).
 
 ## [0.0.1] — 2026-07-25 — Phase 0: Planning
 
