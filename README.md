@@ -12,13 +12,22 @@ You start with an empty plot of land, a modest pile of cash and an uncomfortable
 
 | | |
 |---|---|
-| **Current phase** | 🟡 **Phase 0 — Planning complete, awaiting green-light to code** |
-| **Next step** | Phase 1 — Foundation (see [ROADMAP.md](./ROADMAP.md)) |
-| **Playable build** | none yet |
+| **Current phase** | 🟡 **Phase 1 — Foundation: code complete** (remaining: Vercel deploy + real-GPU perf pass) |
+| **Next step** | Phase 2 — The Living Park (see [ROADMAP.md](./ROADMAP.md)) |
+| **Playable build** | ✅ v0.1.0 — build paths, scenery & stalls in a living day/night world; saves, undo, export |
 | **Target platform** | Desktop browser (1280px+), deployed on Vercel |
-| **Mode** | Single-player. Post-1.0: friend leaderboard (no accounts) |
+| **Mode** | Single-player guided sandbox. Post-1.0: friend leaderboard (no accounts) |
 
-> ⚠️ **No code is written until the project owner explicitly says "start coding".** This is a hard rule — see [CLAUDE.md](./CLAUDE.md).
+## 🚀 Run it
+
+```bash
+pnpm install
+pnpm assets     # once (and after changing the asset manifest): builds optimized models
+pnpm dev        # → http://localhost:3000
+```
+
+Quality gates: `pnpm typecheck && pnpm lint && pnpm test && pnpm build` · e2e: `pnpm e2e` (needs a build + Chromium).
+**Deploy:** import the repo on [vercel.com/new](https://vercel.com/new) — zero config (committed `public/assets` ship with the build).
 
 ---
 

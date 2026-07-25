@@ -130,13 +130,13 @@ New content requires **no engine changes** — this is the expandability contrac
 
 ## 8. Rendering architecture
 
-- **Instancing-first:** every model that can appear >10× (path tiles, queue pieces, trees, fences, benches, track pieces, guests) renders via `InstancedMesh` keyed by asset id; per-instance color tint for variation. Add/remove through a freelist wrapper (`InstancePool`) — never rebuild arrays per frame.
+- **Instancing-first:** every model that can appear >10× (path tiles, queue pieces, trees, fences, benches, track pieces, guests) renders via `InstancedMesh` keyed by asset id; per-instance color tint for variation. *v1 sync strategy:* instance lists re-derive from world state on a `worldVersion` bump — edit-rate work, never per-frame (a whole built scene renders in ~17 draw calls). The event-driven freelist wrapper (`InstancePool`, no full rebuilds) is the Phase-4 hardening step if edit-rate rebuilds ever show up in profiles.
 - **Guests:** low-poly Kenney characters as instanced meshes with a **procedural walk/bob** (shader-based vertex sway + emote sprite above head) instead of skeletal animation for the crowd; the *inspected/followed* guest swaps to a full skinned clone with real animation. Target 500 crowd instances.
 - **Static batching:** completed coaster tracks and dense scenery clusters get merged geometry snapshots when "dirty→clean" (rebuild on edit, amortized).
-- **Picking:** GPU id-buffer picking (color-coded instance ids rendered to a small offscreen target) — precise, O(1) per click, works with instancing.
+- **Picking:** three.js `InstancedMesh` raycast picking (instanceId → entity) — simple and fast at Phase-1/2 scale. A GPU id-buffer pass (color-coded instance ids to an offscreen target) is the planned upgrade if profiling ever shows raycast cost at 5k+ pieces.
 - **Camera rig:** RTS-style — pan (edge/WASD/drag), orbit, zoom-to-cursor with height-eased pitch, 45°-snap option, follow-guest mode, coaster onboard cam. Constrained to park bounds + min/max zoom.
 - **Ghost previews:** dedicated transparent-material layer fed by the same validation function as the sim (§6).
-- **Lighting/day-night:** one directional sun + ambient, color-graded by time-of-day curve; Kenney skybox crossfade (morning/day/night); shadows: single cascade, static-only casters, quality-tiered in settings.
+- **Lighting/day-night:** one directional sun (shadow-casting) + hemisphere/ambient fill, driven per-frame by a time-of-day palette curve; sky is a **procedural gradient dome shader** (zenith/horizon stops + sun disc) so dawn/dusk blend continuously — chosen over the static Kenney panoramas, which remain in the pipeline for future weather looks. Fog tracks the horizon color; unlit custom shaders (ground) follow a shared `daylight` scalar.
 - **VFX:** GPU particle sprites (coins, dust, confetti, smoke, fireworks) via a pooled points system; never DOM.
 - **Postprocessing budget:** none by default; optional subtle bloom+vignette behind a "Fancy" toggle (must hold 60 fps or auto-off).
 

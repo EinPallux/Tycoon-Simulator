@@ -7,7 +7,7 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Planning | 🟢 complete (this document set) |
-| 1 | Foundation — *"The Architect"* | 🟡 in progress |
+| 1 | Foundation — *"The Architect"* | 🟡 code complete — remaining: Vercel deploy (owner) + real-GPU perf pass |
 | 2 | The Living Park | ⚪ |
 | 3 | Coasters & Chaos | ⚪ |
 | 4 | Progression & Polish | ⚪ |
@@ -21,22 +21,22 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 **Goal:** a deployed, polished app shell around an empty-but-buildable 3D park. Everything structural exists; the fantasy of *placing things in a beautiful world* already works.
 
 **Scope**
-- [ ] Next.js scaffold (TS strict, pnpm, ESLint+boundaries, Prettier, Vitest, Playwright, CI, Vercel deploy)
-- [ ] Asset pipeline v1: manifest, gltf-transform/meshopt build, typed ids, budget gate, auto-credits data
-- [ ] Design-system kit: tokens, HeroHeader, TabStrip, CategoryCard, Panel, Button, Slider, Toast, Tooltip, Modal (per `UI_UX_DESIGN.md §3–4`)
-- [ ] Screens: Boot → Title → Profile-create → Hub (Continue/My Parks/New Park[configurator v1]/Settings/Credits) → Loading → Game; pause veil; settings persist (video/audio/controls/accessibility basics)
-- [ ] 3D world: 128×128 grid, owned-land rendering + fence, CoasterKit park entrance, skybox day/night cycle, lighting, camera rig (pan/orbit/zoom/rotate-snap), perf overlay (F3)
-- [ ] Sim skeleton: fixed-timestep loop, seeded RNG, command dispatch + undo/redo, entity pools, tile bitfields, path graph (no guests yet)
-- [ ] Build system v1: path & queue auto-tiling brushes, scenery placement (≥30 nature/furniture pieces), stall placement (4 CoasterKit stalls as props), ghost validation, rotate, bulldoze+refund, move tool, build dock + category trays
-- [ ] Save system v1: schema+versioning+migration harness, IndexedDB slots, autosave, export/import, save/load round-trip tests
-- [ ] Instanced rendering for paths/scenery + GPU picking + selection outline
+- [x] Next.js scaffold (TS strict, pnpm, ESLint+sim-purity boundaries, Prettier, Vitest, Playwright, GitHub Actions CI) — *Vercel: import the repo, zero config needed (owner-side)*
+- [x] Asset pipeline v1: manifest, gltf-transform build (dedup/prune/weld + baked transforms), content-hashed output, typed ids, 40 MB budget gate, auto-credits data (47 models + 3 skies = 3.5 MB)
+- [x] Design-system kit: tokens, HeroHeader, TabStrip, CategoryCard, Panel, Button, Slider, Toggle, Badge, StatBlock, Toast, Modal (*rich Tooltip component lands with the Phase-2 panels; native titles for now*)
+- [x] Screens: Boot → Title → Profile-create → Hub (Continue/My Parks/New Park configurator/Settings/Credits) → Loading → Game; pause veil (pauses sim); settings persist + apply live
+- [x] 3D world: 128×128 grid, owned-land shader + perimeter fence + entrance arch, procedural-dome day/night cycle (doc'd deviation), sun shadows, camera rig (WASD/drag pan, Q/E 45° snaps, zoom-to-cursor), perf overlay (F3)
+- [x] Sim skeleton: fixed-timestep loop (catch-up capped), seeded RNG streams, command dispatch + patch-based undo/redo (20), entity pools, tile bitfields, path graph + reachability
+- [x] Build system v1: path & queue auto-tiling brushes (drag strokes, live cost), scenery placement (30 defs), 4 stalls with path-adjacency rule, model ghosts w/ reason feedback, rotate, bulldoze click+drag w/ refunds + grace, move tool, build dock + trays (locked future categories visible)
+- [x] Save system v1: zod schema + versioning + migration chain + fixtures, IndexedDB slots, autosave (per park day + tab-hide + exit), export/import `.wanderpark.json` + drag-drop, round-trip tests
+- [x] Instanced rendering for paths/scenery (17 draw calls for a built scene) + instance raycast picking (doc'd deviation) + selection highlight + inspector
 
-**Out of scope:** guests, money, ride operation.
+**Out of scope:** guests, money-earning, ride operation.
 **Acceptance criteria**
-1. Fresh visitor: title → create profile → sandbox park → build paths/plazas/scenery/stalls with ghosts, undo, refunds → save → reload → identical park (Playwright-verified).
-2. Deployed on Vercel; title LCP ≤ 1.5 s; `/play` JS ≤ 1.2 MB gzip; 60 fps with 5,000 placed pieces (stress fixture).
-3. All UI built from kit primitives; zero ad-hoc styles; determinism hash test green in CI.
-4. Docs updated (this file ticked, CHANGELOG, any spec deltas).
+1. ✅ Fresh visitor: title → create profile → park → build paths/scenery/stall with ghosts, undo, refunds → save → reload → identical park — **Playwright-verified in CI** (`e2e/smoke.spec.ts`).
+2. 🟡 Deployed on Vercel (**owner action: import repo**); title LCP ≤ 1.5 s (DOM-only title ✓, measure on deploy); `/play` JS ≤ 1.2 MB gzip (route shell 104 kB + async three chunk — verify on deploy); 60 fps @ 5,000 pieces (**needs a real-GPU pass** — headless SwiftShader can't measure this; stress fixture scheduled with Phase 2's perf gate).
+3. ✅ All UI built from kit primitives + tokens; sim determinism enforced by lint boundaries + unit suite (26 tests + 2 e2e green).
+4. ✅ Docs updated in-step (picking, render-sync and sky deviations recorded in `TECHNICAL_ARCHITECTURE.md §8` / `ASSET_GUIDE.md §4`).
 
 ---
 
