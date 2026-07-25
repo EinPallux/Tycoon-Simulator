@@ -7,7 +7,7 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Planning | 🟢 complete (this document set) |
-| 1 | Foundation — *"The Architect"* | ⚪ awaiting "start coding" |
+| 1 | Foundation — *"The Architect"* | 🟡 in progress |
 | 2 | The Living Park | ⚪ |
 | 3 | Coasters & Chaos | ⚪ |
 | 4 | Progression & Polish | ⚪ |

@@ -12,11 +12,16 @@ This file is the **canonical operating manual** for anyone (human or AI) working
 
 ---
 
-## 2. ⛔ Current gate: PLANNING ONLY
+## 2. ✅ Gate: OPEN — Phase 1 in progress
 
-> **The project owner has not yet said "start coding". Until they explicitly do, do NOT write application code, scaffold projects, or add dependencies. Documentation-only changes are allowed.**
+> The owner green-lit coding on 2026-07-25 ("Start Coding"). Work follows the
+> Phase 1 checklist in `ROADMAP.md`. Dev commands:
 >
-> When the owner green-lights coding, update this section to `Gate: OPEN — Phase N in progress` in the same commit that scaffolds the app.
+> ```
+> pnpm dev         # run locally
+> pnpm assets      # rebuild optimized models + typed manifest from assets/
+> pnpm typecheck && pnpm lint && pnpm test && pnpm build   # quality gates
+> ```
 
 ---
 
