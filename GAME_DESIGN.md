@@ -181,7 +181,7 @@ Rating gates milestones (§10.1), drives spawn rate, and is the primary leaderbo
 ## 10. Progression
 
 ### 10.1 Milestones (per park)
-Rating/guest-count thresholds award named tiers (Muddy Field → Local Attraction → Regional Star → National Treasure → World Wonder), each granting a cash bonus + cosmetic flourish (entrance upgrade visual, fireworks) + 1 free research node. Milestone toasts are the session loop's exclamation points.
+Rating/guest-count thresholds award named tiers (Local Attraction → Rising Star → Regional Star → National Treasure → World Wonder; $500–$10,000 awards), each granting a cash bonus — cosmetic flourishes (entrance upgrades, fireworks) and the free research node join in Phases 3–4. Milestone fanfares are the session loop's exclamation points.
 
 ### 10.2 The Guided Sandbox (the one and only mode)
 **No campaign, no mandatory objectives — owner decision.** "New Park" opens the configurator: park name, map size (S/M/L), starting cash & debt preset, difficulty (§15.7), **Guided Start** toggle (§12, default ON for the first-ever park) and **Freeplay unlocks** toggle (default OFF → research progression on). Guidance is ambient, optional and player-serving: milestones (§10.1), Opportunities (§13), Penny's contextual hints, and the rating panel's "what's hurting you" hints. Players find their own path to money and growth — thrill empire, boutique garden park, food-court economy: all viable.
@@ -268,8 +268,8 @@ Single source of truth for numbers; mirrored in `src/sim/balance/*.ts` once codi
 ### 15.1 Needs decay (points per **sim-hour**; 24 sim-hours = 1 park day = 90 real s at 1×)
 Fun −4 (idle) · Hunger −2.2 · Thirst −3 (+50% in heat, Phase 3) · Energy −1.6 · Bladder +0.9/h passive, +18 per meal, +26 per drink · Nausea: +f(ride intensity − tolerance), −5 idle (fuller model Phase 3). A guest arriving at 60 hunger seeks food (~35) after roughly half a park day. Mood = 0.4·min(needs) + 0.6·avg(needs) + experience modifiers (each thought ±2–9, decaying).
 
-### 15.2 Flat ride envelope (Carousel → Drop Tower)
-Build $1,200–$4,800 · footprint 3×3–4×4 · capacity 12–24 · cycle 30–45 s · excitement 2.5–6.5 · intensity 1–7 · nausea 1–5 · running $8–22/day · reliability decay 0.4–0.9%/day · default ticket $2–6.
+### 15.2 Flat ride envelope (Carousel → Sky Plunge, as shipped)
+Build $2,200–$4,200 · footprint 2×2–4×3 · capacity 8–20 · cycle **7–12 real seconds** (≈2–3 park hours — cycles live in real time so rides stay watchable against 90 s days; boarding 3 s, unload 1.8 s, part-full dispatch after 7 s) · excitement 4.2–6.5 · intensity 1.4–6.8 · nausea 0.8–4.2 · running $12–22/day · default ticket $3–5.50 · reliability decay arrives Phase 3.
 
 ### 15.3 Coaster stat formulas (v1, tune in Phase 3)
 - Excitement = 1.2 + 0.9·drops + 1.4·inversions + 0.028·max_speed(km/h) + 0.35·airtime_s + theming_bonus(0–1.5) − 0.5·roughness, clamp 0–10.

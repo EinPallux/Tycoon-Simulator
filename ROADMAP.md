@@ -8,7 +8,7 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 |---|---|---|
 | 0 | Planning | 🟢 complete (this document set) |
 | 1 | Foundation — *"The Architect"* | 🟡 code complete — remaining: Vercel deploy (owner) + real-GPU perf pass |
-| 2 | The Living Park | ⚪ |
+| 2 | The Living Park | 🟡 code complete — remaining: real-GPU perf pass, break-even tuning (Phase 5), hallway test |
 | 3 | Coasters & Chaos | ⚪ |
 | 4 | Progression & Polish | ⚪ |
 | 5 | Release 1.0 | ⚪ |
@@ -45,23 +45,23 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 **Goal:** the park breathes and pays. Guests arrive, judge, spend; the player manages prices, watches trends, and hits the first "one more minute" hooks.
 
 **Scope**
-- [ ] Guest sim: spawning (rating/appeal-driven), preference profiles, needs/mood engine, A* movement on path graph, FSM (wander/goal/queue/ride/leave), 500-guest perf target
-- [ ] Instanced crowd rendering + procedural walk/bob + emote bubbles + guest inspector (portrait, needs, thoughts, follow-cam)
-- [ ] Flat rides operational (first 6 of 12): queue → board → animated cycle → exit; per-ride pricing, open/close; ride inspector panel
-- [ ] Stalls operational (food/drink/toilets/first-aid/souvenir/info): item pricing, cost-of-goods, need satisfaction
-- [ ] Economy v1: cash, entry ticket, income/expense ledger, daily/weekly rollups, Finances panel (P&L, sparklines)
-- [ ] Park rating v1 (5 terms + hints panel) · milestones with fanfares · notification rail · objective chip
-- [ ] Time controls (pause/1×/2×/3×), day/night guest curves, in-game date
-- [ ] HUD complete per `UI_UX_DESIGN.md §7` (top bar live tickers, coin-pops, panels dock)
-- [ ] Litter: guests drop, bins absorb, visual accumulation (cleanup arrives with janitors in Phase 3 — bins + despawn keep it bounded for now)
-- [ ] Audio v1: UI taps, placement thunk, coin clink, ambient crowd walla scaled by guests
-- [ ] Sim soak test + determinism hash extended to guest systems
+- [x] Guest sim: spawning (rating/entry-value/day-curve), thrill & patience profiles, needs/mood engine (per-sim-hour decay), A* movement on the path graph, full FSM (approach/pay/stroll/travel/queue/ride/buy/leave), 500-guest pool
+- [x] Instanced crowd rendering (4 character models, procedural limb swing + bob, tick interpolation) + emote bubbles (11 sprites) + guest inspector (needs bars, wallet, thoughts, follow-cam)
+- [x] Flat rides operational — all 6 Phase-2 machines animated (Carousel, Ferris, Teacups, Drop, Bumper, Swing): queue-chain → board (fare) → cycle → exit; pricing slider, open/close, ride inspector
+- [x] Stalls operational (food ×2 / drink ×2 / souvenir / info / toilets): item pricing with rip-off verdicts, cost-of-goods, need restoration (*first-aid arrives with the fuller nausea model in Phase 3*)
+- [x] Economy v1: entry ticket slider, income/expense ledger with 14-day history, day rollovers + upkeep, Finances panel (*trend charts arrive with Phase 4 polish*)
+- [x] Park rating v1 (5 terms + weakest-term hints panel) · milestone tiers with awards + fanfares · notifications via the toast rail · objective chip with live progress
+- [x] Time controls (Phase 1) + day/night guest curves + closing-time flush
+- [x] HUD per `UI_UX_DESIGN.md §7`: guests/rating chips, cash pulse + coin clinks, park panel dock (*flying-coin particles land with the Phase-4 juice pass*)
+- [x] Litter: guests drop after snacks, bins prevent within radius, instanced rendering, overnight decay keeps it bounded until janitors (Phase 3)
+- [x] Audio v1: procedural WebAudio taps/thunks/clinks/boings/fanfares + crowd-walla bed scaled by guest density (sourced CC0 packs arrive Phase 4)
+- [x] Sim soak (3-day invariants) + determinism hash across guest systems + save-v2 migration fixture
 
 **Acceptance criteria**
-1. A sandbox park with 6 rides + 6 stalls sustains 300+ guests at 60 fps; needs/thought analytics visibly drive behavior (starve the park of drinks → thirst thoughts spike → drink stall queue forms).
-2. Pricing matters: doubling entry visibly drops spawn rate; underpriced burgers sell out wallet share (elasticity per `GAME_DESIGN.md §15.5`).
-3. Break-even arc on defaults lands in the day-8–12 target band (automated economy soak asserts envelope).
-4. A first-time player can reach rating 300 without docs, using tooltips alone (hallway-test checklist).
+1. 🟡 A park sustains 100+ concurrent guests with legible needs-driven behavior — **verified in-browser** (112 guests, queue bails, lunch-rush stall sales); the 300+ @ 60 fps check needs the real-GPU pass (headless SwiftShader can't measure it).
+2. ✅ Pricing matters: entry-value elasticity gates spawns, over-priced items trigger refusals + "rip-off" thoughts + value-term decay (unit-tested + observed).
+3. 🟡 Break-even arc tuning to the day-8–12 band is Phase-5 balancing work; the soak currently asserts sanity envelopes only.
+4. ⚪ Hallway test (reach rating 300 unaided) — owner-side once deployed.
 
 ---
 
