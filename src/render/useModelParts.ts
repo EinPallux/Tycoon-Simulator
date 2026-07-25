@@ -15,6 +15,8 @@ export interface ModelPart {
   material: Material;
   /** Node's world matrix within the GLB scene (baked hierarchy). */
   matrix: Matrix4;
+  /** Node name (rig part roles: "leg-left", "torso", …). */
+  name: string;
 }
 
 export function isModelAssetId(id: string): id is ModelAssetId {
@@ -39,6 +41,7 @@ export function useModelParts(id: ModelAssetId): ModelPart[] {
             geometry: obj.geometry as BufferGeometry,
             material: material as Material,
             matrix: (obj.matrixWorld as Matrix4).clone(),
+            name: obj.name || obj.parent?.name || "",
           });
         }
       }

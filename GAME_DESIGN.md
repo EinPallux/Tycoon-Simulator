@@ -265,8 +265,8 @@ State-driven, throttled, dismissible-forever-per-topic suggestions: thirst thoug
 
 Single source of truth for numbers; mirrored in `src/sim/balance/*.ts` once coding starts.
 
-### 15.1 Needs decay (points/min at 1×; 90 s = 1 day)
-Fun −4 (idle) · Hunger −2.2 · Thirst −3 (+50% in heat) · Energy −1.6 (−6 walking) · Bladder +2.8 after eat/drink events · Nausea: +f(ride intensity − tolerance), −5 idle. Mood = 0.4·min(needs) + 0.6·avg(needs) + experience modifiers (each thought ±2–8, decaying over 2 days).
+### 15.1 Needs decay (points per **sim-hour**; 24 sim-hours = 1 park day = 90 real s at 1×)
+Fun −4 (idle) · Hunger −2.2 · Thirst −3 (+50% in heat, Phase 3) · Energy −1.6 · Bladder +0.9/h passive, +18 per meal, +26 per drink · Nausea: +f(ride intensity − tolerance), −5 idle (fuller model Phase 3). A guest arriving at 60 hunger seeks food (~35) after roughly half a park day. Mood = 0.4·min(needs) + 0.6·avg(needs) + experience modifiers (each thought ±2–9, decaying).
 
 ### 15.2 Flat ride envelope (Carousel → Drop Tower)
 Build $1,200–$4,800 · footprint 3×3–4×4 · capacity 12–24 · cycle 30–45 s · excitement 2.5–6.5 · intensity 1–7 · nausea 1–5 · running $8–22/day · reliability decay 0.4–0.9%/day · default ticket $2–6.

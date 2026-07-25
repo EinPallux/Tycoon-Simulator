@@ -5,14 +5,41 @@
  * fixture test in __tests__/.
  */
 
-import { CURRENT_FORMAT_VERSION, saveV1Schema, type SaveFile } from "./schema";
+import { CURRENT_FORMAT_VERSION, saveV2Schema, type SaveFile } from "./schema";
 
 type Migration = (save: Record<string, unknown>) => Record<string, unknown>;
 
 /** Keyed by the version the migration upgrades FROM. */
 const MIGRATIONS: Record<number, Migration> = {
-  // Example shape for the future:
-  // 1: (save) => ({ ...save, formatVersion: 2, newField: defaultValue }),
+  /**
+   * v1 (Phase 1, builds only) → v2 (Phase 2, the living park).
+   * Parks gain an empty guest population, default economy books, and
+   * default runtime state for any placed rides/stalls (none existed in v1).
+   */
+  1: (save) => ({
+    ...save,
+    formatVersion: 2,
+    guests: [],
+    guestIdCounter: 0,
+    lifetimeGuests: 0,
+    rides: [],
+    stalls: [],
+    economy: {
+      entryPrice: 1_500,
+      today: {
+        day: Math.floor((typeof save.time === "number" ? save.time : 0) / 900) + 1,
+        income: { entry: 0, rides: 0, stalls: 0, refunds: 0 },
+        expense: { construction: 0, upkeep: 0, goods: 0 },
+      },
+      history: [],
+      lifetimeIncome: 0,
+      lifetimeExpense: 0,
+    },
+    litter: [],
+    valueEma: 0.7,
+    milestoneTier: -1,
+    spawnAcc: 0,
+  }),
 };
 
 export class SaveFormatError extends Error {}
@@ -42,7 +69,7 @@ export function migrateSave(raw: unknown): SaveFile {
     }
     version = next;
   }
-  const parsed = saveV1Schema.safeParse(save);
+  const parsed = saveV2Schema.safeParse(save);
   if (!parsed.success) {
     throw new SaveFormatError(`Save failed validation: ${parsed.error.issues[0]?.message ?? "?"}`);
   }

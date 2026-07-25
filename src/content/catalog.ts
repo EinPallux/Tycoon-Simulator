@@ -4,12 +4,30 @@
  * (cents). Model ids resolve through the generated asset manifest.
  */
 
-import type { PlaceableDef, SurfaceDef } from "./types";
+import type { PlaceableDef, RideConfig, StallConfig, SurfaceDef } from "./types";
 
 export const SURFACES: Record<SurfaceDef["id"], SurfaceDef> = {
   path: { id: "path", name: "Path", costPerTile: 1_000 },
   queue: { id: "queue", name: "Queue", costPerTile: 1_400 },
 };
+
+const ride = (
+  id: string,
+  name: string,
+  cost: number,
+  footprint: readonly [number, number],
+  config: RideConfig,
+  beauty = 3,
+): PlaceableDef => ({
+  id: `ride/${id}`,
+  name,
+  category: "ride",
+  footprint,
+  cost,
+  beauty,
+  requiresPathAdjacent: true,
+  ride: config,
+});
 
 const scenery = (
   id: string,
@@ -30,7 +48,13 @@ const scenery = (
   ...(themeTag ? { themeTag } : {}),
 });
 
-const stall = (id: string, name: string, model: string, cost: number): PlaceableDef => ({
+const stall = (
+  id: string,
+  name: string,
+  model: string,
+  cost: number,
+  config: StallConfig,
+): PlaceableDef => ({
   id: `stall/${id}`,
   name,
   category: "stall",
@@ -39,14 +63,64 @@ const stall = (id: string, name: string, model: string, cost: number): Placeable
   model,
   beauty: 1,
   requiresPathAdjacent: true,
+  stall: config,
 });
 
 export const PLACEABLE_DEFS: readonly PlaceableDef[] = [
-  // ── Stalls (CoasterKit) ────────────────────────────────────────────────
-  stall("food", "Snack Shack", "stalls/food", 40_000),
-  stall("drinks", "Drinks Depot", "stalls/drinks", 35_000),
-  stall("info", "Info Kiosk", "stalls/info", 25_000),
-  stall("toilets", "Toilets", "stalls/toilets", 30_000),
+  // ── Rides (GAME_DESIGN.md §15.2 envelope) ──────────────────────────────
+  ride("carousel", "Carousel", 220_000, [3, 3], {
+    kind: "carousel", capacity: 16, cycleSec: 9,
+    excitement: 4.2, intensity: 1.6, nausea: 1.2,
+    ticket: 300, runningPerDay: 1_200,
+  }),
+  ride("ferris", "Ferris Wheel", 340_000, [3, 3], {
+    kind: "ferris", capacity: 20, cycleSec: 12,
+    excitement: 4.8, intensity: 1.4, nausea: 0.8,
+    ticket: 400, runningPerDay: 1_600,
+  }),
+  ride("teacups", "Whirly Teacups", 260_000, [3, 3], {
+    kind: "teacups", capacity: 12, cycleSec: 8,
+    excitement: 5.0, intensity: 3.6, nausea: 4.2,
+    ticket: 350, runningPerDay: 1_400,
+  }),
+  ride("drop", "Sky Plunge", 420_000, [2, 2], {
+    kind: "drop", capacity: 8, cycleSec: 7,
+    excitement: 6.5, intensity: 6.8, nausea: 3.8,
+    ticket: 550, runningPerDay: 2_200,
+  }, 4),
+  ride("bumper", "Bump-a-Lot Arena", 300_000, [4, 3], {
+    kind: "bumper", capacity: 10, cycleSec: 10,
+    excitement: 5.4, intensity: 3.2, nausea: 1.6,
+    ticket: 400, runningPerDay: 1_800,
+  }),
+  ride("swing", "Jolly Roger", 380_000, [4, 2], {
+    kind: "swing", capacity: 14, cycleSec: 9,
+    excitement: 6.0, intensity: 5.4, nausea: 3.4,
+    ticket: 500, runningPerDay: 2_000,
+  }, 4),
+
+  // ── Stalls (CoasterKit models; items per GAME_DESIGN §15.6) ────────────
+  stall("food", "Snack Shack", "stalls/food", 40_000, {
+    satisfies: "hunger", item: "Burger", price: 400, cogs: 140,
+  }),
+  stall("candy", "Candy Cloud", "stalls/food", 32_000, {
+    satisfies: "hunger", item: "Candy Floss", price: 250, cogs: 70,
+  }),
+  stall("drinks", "Drinks Depot", "stalls/drinks", 35_000, {
+    satisfies: "thirst", item: "Fizzy Pop", price: 300, cogs: 90,
+  }),
+  stall("coffee", "Bean Machine", "stalls/drinks", 30_000, {
+    satisfies: "thirst", item: "Coffee", price: 350, cogs: 100,
+  }),
+  stall("souvenir", "Wander Wares", "stalls/info", 45_000, {
+    satisfies: "fun", item: "Plush Mascot", price: 800, cogs: 300,
+  }),
+  stall("info", "Info Kiosk", "stalls/info", 25_000, {
+    satisfies: "info", item: "Park Map", price: 100, cogs: 20,
+  }),
+  stall("toilets", "Toilets", "stalls/toilets", 30_000, {
+    satisfies: "bladder", item: "Visit", price: 0, cogs: 10,
+  }),
 
   // ── Park furniture (CoasterKit) ────────────────────────────────────────
   scenery("bench", "Bench", "furniture/bench", 5_000, 1),

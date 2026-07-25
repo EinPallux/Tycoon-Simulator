@@ -22,7 +22,8 @@ export type Tool =
   | { kind: "place"; defId: string; rot: number }
   | { kind: "move"; entityId: number; rot: number };
 
-export type DockCategory = "paths" | "scenery" | "stalls" | null;
+export type DockCategory = "paths" | "scenery" | "stalls" | "rides" | null;
+export type ParkPanelTab = "finances" | "guests" | "rating";
 
 interface GameStore {
   sim: SimHandle | null;
@@ -37,11 +38,17 @@ interface GameStore {
   paused: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  guestCount: number;
+  lifetimeGuests: number;
+  ratingValue: number;
 
   // Interaction state
   tool: Tool;
   dockCategory: DockCategory;
   selectedEntity: number | null;
+  selectedGuest: number | null;
+  followGuest: boolean;
+  parkPanel: ParkPanelTab | null;
   hoverInfo: string | null;
   perfOverlay: boolean;
   veilOpen: boolean;
@@ -50,16 +57,33 @@ interface GameStore {
   attach: (sim: SimHandle, saveId: string) => void;
   detach: () => void;
   bumpWorld: () => void;
-  setHud: (patch: Partial<Pick<GameStore, "cash" | "day" | "clock" | "canUndo" | "canRedo">>) => void;
+  setHud: (
+    patch: Partial<
+      Pick<
+        GameStore,
+        | "cash"
+        | "day"
+        | "clock"
+        | "canUndo"
+        | "canRedo"
+        | "guestCount"
+        | "lifetimeGuests"
+        | "ratingValue"
+      >
+    >,
+  ) => void;
   setSpeed: (speed: GameSpeed) => void;
   togglePause: () => void;
   setTool: (tool: Tool) => void;
   setDockCategory: (category: DockCategory) => void;
   selectEntity: (id: number | null) => void;
+  selectGuest: (id: number | null) => void;
+  setFollowGuest: (follow: boolean) => void;
+  setParkPanel: (tab: ParkPanelTab | null) => void;
   setHoverInfo: (info: string | null) => void;
   togglePerfOverlay: () => void;
   setVeilOpen: (open: boolean) => void;
-  /** Esc back-chain: tray → tool → selection → pause veil. Returns handled. */
+  /** Esc back-chain: panel → tray → tool → selection → pause veil. */
   escape: () => void;
 }
 
@@ -76,10 +100,16 @@ export const useGameStore = create<GameStore>()(
     paused: false,
     canUndo: false,
     canRedo: false,
+    guestCount: 0,
+    lifetimeGuests: 0,
+    ratingValue: 0,
 
     tool: { kind: "select" },
     dockCategory: null,
     selectedEntity: null,
+    selectedGuest: null,
+    followGuest: false,
+    parkPanel: null,
     hoverInfo: null,
     perfOverlay: false,
     veilOpen: false,
@@ -91,11 +121,17 @@ export const useGameStore = create<GameStore>()(
         worldVersion: 1,
         cash: sim.world.cash,
         day: dayOfTime(sim.world.time),
+        guestCount: sim.world.guests.count,
+        lifetimeGuests: sim.world.lifetimeGuests,
+        ratingValue: sim.world.rating.value,
         speed: 1,
         paused: false,
         tool: { kind: "select" },
         dockCategory: null,
         selectedEntity: null,
+        selectedGuest: null,
+        followGuest: false,
+        parkPanel: null,
         veilOpen: false,
       }),
     detach: () => set({ sim: null, saveId: null, worldVersion: 0 }),
@@ -103,18 +139,35 @@ export const useGameStore = create<GameStore>()(
     setHud: (patch) => set(patch),
     setSpeed: (speed) => set({ speed, paused: speed === 0 }),
     togglePause: () => set((s) => ({ paused: !s.paused })),
-    setTool: (tool) => set({ tool, selectedEntity: tool.kind === "select" ? get().selectedEntity : null }),
+    setTool: (tool) =>
+      set({
+        tool,
+        selectedEntity: tool.kind === "select" ? get().selectedEntity : null,
+        selectedGuest: tool.kind === "select" ? get().selectedGuest : null,
+      }),
     setDockCategory: (category) => set({ dockCategory: category }),
-    selectEntity: (id) => set({ selectedEntity: id, tool: { kind: "select" } }),
+    selectEntity: (id) =>
+      set({ selectedEntity: id, selectedGuest: null, followGuest: false, tool: { kind: "select" } }),
+    selectGuest: (id) =>
+      set({
+        selectedGuest: id,
+        selectedEntity: null,
+        followGuest: id === null ? false : get().followGuest,
+        tool: { kind: "select" },
+      }),
+    setFollowGuest: (follow) => set({ followGuest: follow }),
+    setParkPanel: (tab) => set({ parkPanel: tab }),
     setHoverInfo: (info) => set({ hoverInfo: info }),
     togglePerfOverlay: () => set((s) => ({ perfOverlay: !s.perfOverlay })),
     setVeilOpen: (open) => set({ veilOpen: open }),
     escape: () => {
       const s = get();
       if (s.veilOpen) set({ veilOpen: false });
+      else if (s.parkPanel !== null) set({ parkPanel: null });
       else if (s.dockCategory !== null) set({ dockCategory: null });
       else if (s.tool.kind !== "select") set({ tool: { kind: "select" } });
-      else if (s.selectedEntity !== null) set({ selectedEntity: null });
+      else if (s.selectedEntity !== null || s.selectedGuest !== null)
+        set({ selectedEntity: null, selectedGuest: null, followGuest: false });
       else set({ veilOpen: true });
     },
   })),

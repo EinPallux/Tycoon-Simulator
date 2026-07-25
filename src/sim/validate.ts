@@ -13,6 +13,7 @@ import {
   isOwned,
   SURFACE_NONE,
   SURFACE_PATH,
+  SURFACE_QUEUE,
   type Surface,
 } from "./world/tiles";
 import type { World } from "./world/world";
@@ -59,7 +60,10 @@ export function canPlaceEntity(
       return { ok: false, reason: "Blocked by the entrance" };
   }
   if (def.requiresPathAdjacent && !hasPathAdjacentEdge(world, def, x, z, rot)) {
-    return { ok: false, reason: "Needs to touch a path" };
+    return {
+      ok: false,
+      reason: def.category === "ride" ? "Needs to touch a path or queue" : "Needs to touch a path",
+    };
   }
   if (world.cash < def.cost) return { ok: false, reason: "Not enough cash" };
   return { ok: true };
@@ -72,14 +76,17 @@ function hasPathAdjacentEdge(
   z: number,
   rot: number,
 ): boolean {
+  // Rides may connect via a queue line instead of a bare path (§4.2).
+  const accepts = (s: Surface): boolean =>
+    s === SURFACE_PATH || (def.category === "ride" && s === SURFACE_QUEUE);
   const [w, d] = rotatedFootprint(def, rot);
   for (let dx = 0; dx < w; dx++) {
-    if (getSurface(world.tiles, x + dx, z - 1) === SURFACE_PATH) return true;
-    if (getSurface(world.tiles, x + dx, z + d) === SURFACE_PATH) return true;
+    if (accepts(getSurface(world.tiles, x + dx, z - 1))) return true;
+    if (accepts(getSurface(world.tiles, x + dx, z + d))) return true;
   }
   for (let dz = 0; dz < d; dz++) {
-    if (getSurface(world.tiles, x - 1, z + dz) === SURFACE_PATH) return true;
-    if (getSurface(world.tiles, x + w, z + dz) === SURFACE_PATH) return true;
+    if (accepts(getSurface(world.tiles, x - 1, z + dz))) return true;
+    if (accepts(getSurface(world.tiles, x + w, z + dz))) return true;
   }
   return false;
 }

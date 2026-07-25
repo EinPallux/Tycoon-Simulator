@@ -14,8 +14,12 @@ import { worldFromSave } from "@/sim/save/serialize";
 import { dayOfTime, formatClock, TICKS_PER_SEC } from "@/sim/world/time";
 import { loadSave, storeSave } from "@/ui/saves";
 import { useGameStore } from "@/ui/stores/gameStore";
+import { useAppStore } from "@/ui/stores/appStore";
 import { toast, ToastRail } from "@/ui/kit/Toast";
+import { applyVolumes, setWallaLevel, sfx, unlockAudio } from "@/audio/bus";
+import { formatMoney } from "@/ui/format";
 import { WorldScene } from "./WorldScene";
+import { renderClock } from "./stats";
 import { Hud } from "@/ui/hud/Hud";
 
 export default function GameRoot() {
@@ -44,6 +48,11 @@ export default function GameRoot() {
         useGameStore.getState().attach(handle, saveId);
         wireSimEvents(handle);
         setSim(handle);
+        // Deterministic hooks for e2e scripts and debugging.
+        (window as unknown as Record<string, unknown>).__wanderpark = {
+          sim: handle,
+          store: useGameStore,
+        };
       })
       .catch((err: unknown) => {
         console.error(err);
@@ -58,6 +67,20 @@ export default function GameRoot() {
   useSimLoop(sim);
   useKeyboard(sim, saveId);
   useAutosave(sim, saveId);
+
+  // Audio unlock needs a user gesture; volumes track settings live.
+  useEffect(() => {
+    const unlock = (): void => {
+      unlockAudio();
+      applyVolumes();
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    const unsub = useAppStore.subscribe(() => applyVolumes());
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      unsub();
+    };
+  }, []);
 
   if (loadError) {
     return (
@@ -115,10 +138,35 @@ function wireSimEvents(sim: SimHandle): void {
   sim.events.on("stack-changed", ({ undo, redo }) =>
     useGameStore.getState().setHud({ canUndo: undo > 0, canRedo: redo > 0 }),
   );
-  sim.events.on("entity-added", () => store.bumpWorld());
+  sim.events.on("entity-added", () => {
+    store.bumpWorld();
+    sfx.thunk();
+  });
   sim.events.on("entity-removed", () => store.bumpWorld());
-  sim.events.on("surface-changed", () => store.bumpWorld());
-  sim.events.on("command-rejected", ({ reason }) => toast("warning", reason));
+  sim.events.on("surface-changed", () => {
+    store.bumpWorld();
+    sfx.thunk();
+  });
+  sim.events.on("command-rejected", ({ reason }) => {
+    toast("warning", reason);
+    sfx.boing();
+  });
+  // ── The living park ──
+  sim.events.on("sale", () => {
+    useGameStore.getState().setHud({ cash: sim.world.cash });
+    sfx.clink();
+  });
+  sim.events.on("guests-changed", ({ count, lifetime }) =>
+    useGameStore.getState().setHud({ guestCount: count, lifetimeGuests: lifetime }),
+  );
+  sim.events.on("rating-changed", ({ value }) =>
+    useGameStore.getState().setHud({ ratingValue: value }),
+  );
+  sim.events.on("milestone", ({ name, award }) => {
+    toast("success", `🏆 Milestone: ${name}! Award: ${formatMoney(award)}`);
+    sfx.fanfare();
+  });
+  sim.events.on("notify", ({ tone, message }) => toast(tone, message));
 }
 
 // ── Fixed-timestep driver (10 Hz logic × speed) ──────────────────────────
@@ -144,6 +192,11 @@ function useSimLoop(sim: SimHandle | null): void {
       accumulator -= whole;
       let steps = Math.min(5, whole);
       while (steps-- > 0) sim.tick(1);
+      // Guest-position interpolation fraction for the render layers.
+      renderClock.alpha = ticksPerSec > 0 ? Math.min(1, accumulator) : 1;
+
+      // Ambient crowd volume tracks guest density (throttled inside).
+      if (sim.world.time % 10 === 0) setWallaLevel(sim.world.guests.count / 250);
 
       const clock = formatClock(sim.world.time);
       if (clock !== lastClock) {

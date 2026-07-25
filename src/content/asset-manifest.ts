@@ -57,6 +57,14 @@ export const MODEL_ASSETS = {
   "nature/obelisk": { url: "/assets/models/nature-obelisk.e8411d66.glb", kit: "Kenney_NatureKit" },
   "nature/fence-wood": { url: "/assets/models/nature-fence-wood.0652f90e.glb", kit: "Kenney_NatureKit" },
   "nature/fence-planks": { url: "/assets/models/nature-fence-planks.dd1c6c83.glb", kit: "Kenney_NatureKit" },
+  "guests/char-a": { url: "/assets/models/guests-char-a.32b890bc.glb", kit: "Kenney_BlockyCharacters" },
+  "guests/char-b": { url: "/assets/models/guests-char-b.46396c8b.glb", kit: "Kenney_BlockyCharacters" },
+  "guests/char-c": { url: "/assets/models/guests-char-c.d35d5c2f.glb", kit: "Kenney_BlockyCharacters" },
+  "guests/char-d": { url: "/assets/models/guests-char-d.6603c643.glb", kit: "Kenney_BlockyCharacters" },
+  "rides/pirate-ship": { url: "/assets/models/rides-pirate-ship.70dc3835.glb", kit: "Kenney_PirateKit" },
+  "rides/bumper-car-a": { url: "/assets/models/rides-bumper-car-a.ed5855c5.glb", kit: "Kenney_ToyCarKit" },
+  "rides/bumper-car-b": { url: "/assets/models/rides-bumper-car-b.68d260e7.glb", kit: "Kenney_ToyCarKit" },
+  "rides/bumper-car-c": { url: "/assets/models/rides-bumper-car-c.070c2672.glb", kit: "Kenney_ToyCarKit" },
 } as const satisfies Record<string, AssetEntry>;
 
 export type ModelAssetId = keyof typeof MODEL_ASSETS;
@@ -69,15 +77,39 @@ export const SKY_ASSETS = {
 
 export type SkyAssetId = keyof typeof SKY_ASSETS;
 
+export const SPRITE_ASSETS = {
+  "emote/happy": { url: "/assets/sprites/emote-happy.01bacb8e.png", kit: "Kenney_EmotesPack" },
+  "emote/star": { url: "/assets/sprites/emote-star.41e22f49.png", kit: "Kenney_EmotesPack" },
+  "emote/heart": { url: "/assets/sprites/emote-heart.9a71a696.png", kit: "Kenney_EmotesPack" },
+  "emote/hungry": { url: "/assets/sprites/emote-hungry.791c39d0.png", kit: "Kenney_EmotesPack" },
+  "emote/thirsty": { url: "/assets/sprites/emote-thirsty.a6253d1c.png", kit: "Kenney_EmotesPack" },
+  "emote/tired": { url: "/assets/sprites/emote-tired.a8152dde.png", kit: "Kenney_EmotesPack" },
+  "emote/toilet": { url: "/assets/sprites/emote-toilet.1a1ad3d8.png", kit: "Kenney_EmotesPack" },
+  "emote/angry": { url: "/assets/sprites/emote-angry.edcbad27.png", kit: "Kenney_EmotesPack" },
+  "emote/expensive": { url: "/assets/sprites/emote-expensive.72b5e7d6.png", kit: "Kenney_EmotesPack" },
+  "emote/sad": { url: "/assets/sprites/emote-sad.a0b1b930.png", kit: "Kenney_EmotesPack" },
+  "emote/idea": { url: "/assets/sprites/emote-idea.0acfe35b.png", kit: "Kenney_EmotesPack" },
+} as const satisfies Record<string, AssetEntry>;
+
+export type SpriteAssetId = keyof typeof SPRITE_ASSETS;
+
+export function spriteUrl(id: SpriteAssetId): string {
+  return SPRITE_ASSETS[id].url;
+}
+
 /** Source kits shipped in this build (feeds the credits screen). */
 export const CREDIT_KITS: readonly string[] = [
+  "Kenney_BlockyCharacters",
   "Kenney_CityKitCommercial",
   "Kenney_CityKitRoads",
   "Kenney_CityKitSuburban",
   "Kenney_CoasterKit",
+  "Kenney_EmotesPack",
   "Kenney_MinigolfKit",
   "Kenney_NatureKit",
-  "Kenney_Skyboxes"
+  "Kenney_PirateKit",
+  "Kenney_Skyboxes",
+  "Kenney_ToyCarKit"
 ];
 
 export function modelUrl(id: ModelAssetId): string {

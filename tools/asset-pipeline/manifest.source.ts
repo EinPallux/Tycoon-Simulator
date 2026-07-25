@@ -84,6 +84,40 @@ export const MODEL_SOURCES: Record<string, ModelSource> = {
   "nature/obelisk": { kit: "Kenney_NatureKit", file: "statue_obelisk.glb", scale: 1.5 },
   "nature/fence-wood": { kit: "Kenney_NatureKit", file: "fence_simple.glb", scale: 1.5 },
   "nature/fence-planks": { kit: "Kenney_NatureKit", file: "fence_planks.glb", scale: 1.5 },
+
+  // ── Guests (BlockyCharacters; ~1.75 m tall after scaling) ──────────────
+  "guests/char-a": { kit: "Kenney_BlockyCharacters", file: "character-a.glb", scale: 0.33 },
+  "guests/char-b": { kit: "Kenney_BlockyCharacters", file: "character-b.glb", scale: 0.33 },
+  "guests/char-c": { kit: "Kenney_BlockyCharacters", file: "character-c.glb", scale: 0.33 },
+  "guests/char-d": { kit: "Kenney_BlockyCharacters", file: "character-d.glb", scale: 0.33 },
+
+  // ── Ride prop models (procedural ride structures use these as parts) ──
+  "rides/pirate-ship": { kit: "Kenney_PirateKit", file: "ship-pirate-small.glb", scale: 0.32 },
+  "rides/bumper-car-a": { kit: "Kenney_ToyCarKit", file: "vehicle-speedster.glb", scale: 1.2 },
+  "rides/bumper-car-b": { kit: "Kenney_ToyCarKit", file: "vehicle-suv.glb", scale: 1.2 },
+  "rides/bumper-car-c": { kit: "Kenney_ToyCarKit", file: "vehicle-racer.glb", scale: 1.2 },
+};
+
+export interface SpriteSource {
+  kit: string;
+  file: string;
+  /** Subfolder filter when the same basename exists in multiple styles. */
+  within?: string;
+}
+
+/** Emote sprites (billboarded above guests). */
+export const SPRITE_SOURCES: Record<string, SpriteSource> = {
+  "emote/happy": { kit: "Kenney_EmotesPack", file: "emote_faceHappy.png", within: "Vector/Style 1" },
+  "emote/star": { kit: "Kenney_EmotesPack", file: "emote_star.png", within: "Vector/Style 1" },
+  "emote/heart": { kit: "Kenney_EmotesPack", file: "emote_heart.png", within: "Vector/Style 1" },
+  "emote/hungry": { kit: "Kenney_EmotesPack", file: "emote_cloud.png", within: "Vector/Style 1" },
+  "emote/thirsty": { kit: "Kenney_EmotesPack", file: "emote_drop.png", within: "Vector/Style 1" },
+  "emote/tired": { kit: "Kenney_EmotesPack", file: "emote_sleep.png", within: "Vector/Style 1" },
+  "emote/toilet": { kit: "Kenney_EmotesPack", file: "emote_exclamations.png", within: "Vector/Style 1" },
+  "emote/angry": { kit: "Kenney_EmotesPack", file: "emote_faceAngry.png", within: "Vector/Style 1" },
+  "emote/expensive": { kit: "Kenney_EmotesPack", file: "emote_cash.png", within: "Vector/Style 1" },
+  "emote/sad": { kit: "Kenney_EmotesPack", file: "emote_faceSad.png", within: "Vector/Style 1" },
+  "emote/idea": { kit: "Kenney_EmotesPack", file: "emote_idea.png", within: "Vector/Style 1" },
 };
 
 export const SKY_SOURCES: Record<string, SkySource> = {

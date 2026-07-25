@@ -6,6 +6,7 @@
  */
 
 import { getPlaceableDef, SURFACES } from "@/content/catalog";
+import { GUEST_STATE } from "./entities/guests";
 import { canPlaceEntity, canPlaceSurface, footprintTiles } from "./validate";
 import {
   SURFACE_NONE,
@@ -14,7 +15,7 @@ import {
   tileIndex,
   type Surface,
 } from "./world/tiles";
-import type { PlacedEntity, World } from "./world/world";
+import type { PlacedEntity, RideState, StallState, World } from "./world/world";
 import { TICKS_PER_SEC } from "./world/time";
 
 export const UNDO_DEPTH = 20;
@@ -27,7 +28,11 @@ export type Command =
   | { type: "erase-surface"; tiles: ReadonlyArray<readonly [number, number]> }
   | { type: "place-entity"; defId: string; x: number; z: number; rot: number }
   | { type: "remove-entity"; id: number }
-  | { type: "move-entity"; id: number; x: number; z: number; rot: number };
+  | { type: "move-entity"; id: number; x: number; z: number; rot: number }
+  // Settings commands — instant, not undoable (no Patch pushed).
+  | { type: "set-ride-open"; id: number; open: boolean }
+  | { type: "set-price"; id: number; price: number }
+  | { type: "set-entry-price"; price: number };
 
 export interface TileChange {
   idx: number;
@@ -43,11 +48,17 @@ export interface Patch {
   tileChanges: TileChange[];
   entitiesAdded: PlacedEntity[];
   entitiesRemoved: PlacedEntity[];
+  /** Runtime-state snapshots (rides/stalls) so undo & move keep settings. */
+  rideSnapshots?: RideState[];
+  stallSnapshots?: StallState[];
 }
 
-export type DispatchResult = { ok: true; patch: Patch } | { ok: false; reason: string };
+export type DispatchResult =
+  | { ok: true; patch: Patch }
+  | { ok: true; patch: null } // settings command — nothing to undo
+  | { ok: false; reason: string };
 
-// ── Entity stamping ──────────────────────────────────────────────────────
+// ── Entity stamping & runtime state lifecycle ────────────────────────────
 
 function stampEntity(world: World, e: PlacedEntity, value: number): void {
   const def = getPlaceableDef(e.defId);
@@ -56,14 +67,80 @@ function stampEntity(world: World, e: PlacedEntity, value: number): void {
   }
 }
 
-function addEntity(world: World, e: PlacedEntity): void {
+function addEntity(world: World, e: PlacedEntity, patch?: Patch): void {
   world.placeables.set(e.id, e);
   stampEntity(world, e, e.id);
+  const def = getPlaceableDef(e.defId);
+  if (def.ride && !world.rides.has(e.id)) {
+    const snapshot = patch?.rideSnapshots?.find((s) => s.entityId === e.id);
+    world.rides.set(
+      e.id,
+      snapshot
+        ? { ...snapshot, riders: [], queue: [], phase: "idle", phaseT: 0 }
+        : {
+            entityId: e.id,
+            open: true,
+            price: def.ride.ticket,
+            phase: "idle",
+            phaseT: 0,
+            riders: [],
+            queue: [],
+            lifetimeRiders: 0,
+            incomeToday: 0,
+          },
+    );
+  }
+  if (def.stall && !world.stalls.has(e.id)) {
+    const snapshot = patch?.stallSnapshots?.find((s) => s.entityId === e.id);
+    world.stalls.set(
+      e.id,
+      snapshot
+        ? { ...snapshot }
+        : { entityId: e.id, price: def.stall.price, salesToday: 0, incomeToday: 0 },
+    );
+  }
+}
+
+/** Send everyone attached to a ride back onto the paths. */
+function releaseRideGuests(world: World, id: number): void {
+  const ride = world.rides.get(id);
+  if (!ride) return;
+  const entity = world.placeables.get(id);
+  for (const guestId of [...ride.queue, ...ride.riders]) {
+    const slot = world.guests.slotOf.get(guestId);
+    if (slot === undefined) continue;
+    world.guests.state[slot] = GUEST_STATE.strolling;
+    world.guests.timer[slot] = 0;
+    if (entity) {
+      world.guests.x[slot] = entity.x + 0.5;
+      world.guests.z[slot] = entity.z + 1.5;
+    }
+    const cold = world.guests.cold.get(guestId);
+    if (cold) cold.target = 0;
+  }
+  ride.queue.length = 0;
+  ride.riders.length = 0;
 }
 
 function removeEntity(world: World, e: PlacedEntity): void {
+  releaseRideGuests(world, e.id);
+  world.rides.delete(e.id);
+  world.stalls.delete(e.id);
+  // Guests heading here retarget on arrival (target lookup fails safely).
   world.placeables.delete(e.id);
   stampEntity(world, e, 0);
+}
+
+/** Capture runtime snapshots for entities a patch will remove. */
+function snapshotRuntime(world: World, entities: PlacedEntity[], patch: Patch): void {
+  for (const e of entities) {
+    const ride = world.rides.get(e.id);
+    if (ride) {
+      (patch.rideSnapshots ??= []).push({ ...ride, riders: [], queue: [] });
+    }
+    const stall = world.stalls.get(e.id);
+    if (stall) (patch.stallSnapshots ??= []).push({ ...stall });
+  }
 }
 
 // ── Command execution ────────────────────────────────────────────────────
@@ -80,6 +157,30 @@ export function executeCommand(world: World, cmd: Command): DispatchResult {
       return execRemoveEntity(world, cmd.id);
     case "move-entity":
       return execMoveEntity(world, cmd.id, cmd.x, cmd.z, cmd.rot);
+    case "set-ride-open": {
+      const ride = world.rides.get(cmd.id);
+      if (!ride) return { ok: false, reason: "No such ride" };
+      ride.open = cmd.open;
+      return { ok: true, patch: null };
+    }
+    case "set-price": {
+      const price = Math.max(0, Math.round(cmd.price));
+      const ride = world.rides.get(cmd.id);
+      if (ride) {
+        ride.price = price;
+        return { ok: true, patch: null };
+      }
+      const stall = world.stalls.get(cmd.id);
+      if (stall) {
+        stall.price = price;
+        return { ok: true, patch: null };
+      }
+      return { ok: false, reason: "Nothing priceable selected" };
+    }
+    case "set-entry-price": {
+      world.economy.entryPrice = Math.max(0, Math.round(cmd.price));
+      return { ok: true, patch: null };
+    }
   }
 }
 
@@ -186,6 +287,7 @@ function execRemoveEntity(world: World, id: number): DispatchResult {
     entitiesAdded: [],
     entitiesRemoved: [entity],
   };
+  snapshotRuntime(world, [entity], patch);
   applyPatch(world, patch);
   return { ok: true, patch };
 }
@@ -217,6 +319,7 @@ function execMoveEntity(
     entitiesAdded: [moved],
     entitiesRemoved: [entity],
   };
+  snapshotRuntime(world, [entity], patch);
   applyPatch(world, patch);
   return { ok: true, patch };
 }
@@ -227,12 +330,12 @@ export function applyPatch(world: World, patch: Patch): void {
   world.cash += patch.cashDelta;
   for (const c of patch.tileChanges) world.tiles.surface[c.idx] = c.next;
   for (const e of patch.entitiesRemoved) removeEntity(world, e);
-  for (const e of patch.entitiesAdded) addEntity(world, e);
+  for (const e of patch.entitiesAdded) addEntity(world, e, patch);
 }
 
 export function revertPatch(world: World, patch: Patch): void {
   world.cash -= patch.cashDelta;
   for (const c of patch.tileChanges) world.tiles.surface[c.idx] = c.prev;
   for (const e of patch.entitiesAdded) removeEntity(world, e);
-  for (const e of patch.entitiesRemoved) addEntity(world, e);
+  for (const e of patch.entitiesRemoved) addEntity(world, e, patch);
 }

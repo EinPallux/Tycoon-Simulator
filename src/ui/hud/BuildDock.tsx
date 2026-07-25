@@ -23,14 +23,20 @@ interface DockEntry {
 const DOCK: DockEntry[] = [
   { id: "paths", label: "Paths", icon: "🛤", color: "bg-card-teal" },
   { id: "coasters", label: "Coasters", icon: "🎢", color: "bg-card-magenta", lockedHint: "Phase 3" },
-  { id: "rides", label: "Rides", icon: "🎡", color: "bg-card-blue", lockedHint: "Phase 2" },
+  { id: "rides", label: "Rides", icon: "🎡", color: "bg-card-blue" },
   { id: "stalls", label: "Stalls", icon: "🍔", color: "bg-card-orange" },
   { id: "scenery", label: "Scenery", icon: "🌳", color: "bg-card-green" },
   { id: "staff", label: "Staff", icon: "🧹", color: "bg-card-purple", lockedHint: "Phase 3" },
-  { id: "management", label: "Manage", icon: "📊", color: "bg-card-purple", lockedHint: "Phase 2" },
+  { id: "management", label: "Manage", icon: "📊", color: "bg-card-purple" },
 ];
 
 const DEF_ICONS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/carousel/, "🎠"],
+  [/ferris/, "🎡"],
+  [/teacups/, "🍵"],
+  [/drop/, "🗼"],
+  [/bumper/, "🚗"],
+  [/swing/, "🏴‍☠️"],
   [/tree|palm|pine|oak/, "🌳"],
   [/bush|hedge/, "🌿"],
   [/flower/, "🌸"],
@@ -64,6 +70,8 @@ export function BuildDock() {
 
   const sceneryDefs = useMemo(() => PLACEABLE_DEFS.filter((d) => d.category === "scenery"), []);
   const stallDefs = useMemo(() => PLACEABLE_DEFS.filter((d) => d.category === "stall"), []);
+  const rideDefs = useMemo(() => PLACEABLE_DEFS.filter((d) => d.category === "ride"), []);
+  const setParkPanel = useGameStore((s) => s.setParkPanel);
 
   return (
     <div className="pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 pb-3">
@@ -95,14 +103,19 @@ export function BuildDock() {
               />
             </div>
           )}
-          {(dockCategory === "scenery" || dockCategory === "stalls") && (
+          {(dockCategory === "scenery" || dockCategory === "stalls" || dockCategory === "rides") && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-              {(dockCategory === "scenery" ? sceneryDefs : stallDefs).map((def) => (
+              {(dockCategory === "scenery"
+                ? sceneryDefs
+                : dockCategory === "stalls"
+                  ? stallDefs
+                  : rideDefs
+              ).map((def) => (
                 <TrayCard
                   key={def.id}
                   icon={iconFor(def)}
                   title={def.name}
-                  subtitle={`${formatMoney(def.cost)}${def.footprint[0] * def.footprint[1] > 1 ? ` · ${def.footprint[0]}×${def.footprint[1]}` : ""}`}
+                  subtitle={`${formatMoney(def.cost)}${def.footprint[0] * def.footprint[1] > 1 ? ` · ${def.footprint[0]}×${def.footprint[1]}` : ""}${def.ride ? ` · E${def.ride.excitement.toFixed(1)}` : ""}`}
                   active={tool.kind === "place" && tool.defId === def.id}
                   onClick={() => setTool({ kind: "place", defId: def.id, rot: 0 })}
                 />
@@ -122,9 +135,10 @@ export function BuildDock() {
               key={entry.id}
               disabled={locked}
               title={locked ? `${entry.label} — arrives in ${entry.lockedHint}` : entry.label}
-              onClick={() =>
-                setDockCategory(isOpen ? null : (entry.id as Exclude<DockCategory, null>))
-              }
+              onClick={() => {
+                if (entry.id === "management") setParkPanel("finances");
+                else setDockCategory(isOpen ? null : (entry.id as Exclude<DockCategory, null>));
+              }}
               className={`skewed panel-shadow group relative flex cursor-pointer flex-col items-center transition-all duration-100 ${
                 isOpen ? "-translate-y-1.5" : "hover:-translate-y-1"
               } ${locked ? "cursor-not-allowed opacity-45" : ""}`}

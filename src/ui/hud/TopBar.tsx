@@ -13,10 +13,13 @@ export function TopBar() {
   const paused = useGameStore((s) => s.paused);
   const canUndo = useGameStore((s) => s.canUndo);
   const canRedo = useGameStore((s) => s.canRedo);
+  const guestCount = useGameStore((s) => s.guestCount);
+  const ratingValue = useGameStore((s) => s.ratingValue);
   const sim = useGameStore((s) => s.sim);
   const setSpeed = useGameStore((s) => s.setSpeed);
   const togglePause = useGameStore((s) => s.togglePause);
   const setVeilOpen = useGameStore((s) => s.setVeilOpen);
+  const setParkPanel = useGameStore((s) => s.setParkPanel);
 
   // Cash pulse on change.
   const cashRef = useRef<HTMLSpanElement>(null);
@@ -86,6 +89,26 @@ export function TopBar() {
             ↪
           </button>
         </div>
+        <button
+          onClick={() => setParkPanel("guests")}
+          title="Guests in the park"
+          className="skewed panel-shadow flex cursor-pointer items-center gap-2 bg-ink-900/90 px-3.5 py-2 transition-transform hover:-translate-y-0.5"
+        >
+          <span className="unskew flex items-center gap-1.5 text-sm font-bold text-paper-050">
+            <span aria-hidden>👥</span>
+            <span className="tabular">{guestCount}</span>
+          </span>
+        </button>
+        <button
+          onClick={() => setParkPanel("rating")}
+          title="Park rating"
+          className="skewed panel-shadow flex cursor-pointer items-center gap-2 bg-ink-900/90 px-3.5 py-2 transition-transform hover:-translate-y-0.5"
+        >
+          <span className="unskew flex items-center gap-1.5 text-sm font-bold text-paper-050">
+            <span aria-hidden>⭐</span>
+            <span className="tabular">{ratingValue}</span>
+          </span>
+        </button>
       </div>
 
       {/* Right cluster: time + speed + menu */}

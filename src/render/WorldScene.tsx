@@ -10,6 +10,10 @@ import { Ground, ParkBoundary, ParkEntrance } from "./Ground";
 import { PathLayer } from "./PathLayer";
 import { EntitiesLayer } from "./EntitiesLayer";
 import { BuildController } from "./BuildController";
+import { CrowdLayer } from "./CrowdLayer";
+import { EmoteLayer } from "./EmoteLayer";
+import { RideLayer } from "./RideLayer";
+import { LitterLayer } from "./LitterLayer";
 import { frameStats } from "./stats";
 
 export function WorldScene() {
@@ -22,6 +26,10 @@ export function WorldScene() {
       <ParkEntrance />
       <PathLayer />
       <EntitiesLayer />
+      <RideLayer />
+      <CrowdLayer />
+      <EmoteLayer />
+      <LitterLayer />
       <BuildController />
       <StatsProbe />
     </>
