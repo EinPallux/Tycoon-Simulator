@@ -25,7 +25,6 @@ describe("seeded rng", () => {
 
   it("derives independent stable streams", () => {
     const s1 = deriveStream(7, "guests");
-    const s2 = deriveStream(7, "weather");
     const s1again = deriveStream(7, "guests");
     expect(s1.next()).toBe(s1again.next());
     const x = deriveStream(7, "guests");

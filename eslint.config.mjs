@@ -25,6 +25,18 @@ const config = [
     rules: {
       // CLAUDE.md §4.8 — no `any` without an annotated reason.
       "@typescript-eslint/no-explicit-any": "error",
+      // Too aggressive for standard async data-load effects (flags setState
+      // reached through ANY call in an effect body, awaited or not).
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
+    // React-Compiler-era immutability rules don't fit the R3F/three domain:
+    // mutating materials, uniforms and refs inside useFrame IS the idiom.
+    files: ["src/render/**"],
+    rules: {
+      "react-hooks/immutability": "off",
+      "react-hooks/refs": "off",
     },
   },
   {

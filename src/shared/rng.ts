@@ -38,8 +38,7 @@ export function createRng(seed: number): Rng {
     chance: (p) => next() < p,
     pick: (items) => {
       if (items.length === 0) throw new Error("Rng.pick on empty array");
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return items[Math.floor(next() * items.length)]!;
+      return items[Math.floor(next() * items.length)] as (typeof items)[number];
     },
     state: () => a,
   };

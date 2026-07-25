@@ -7,6 +7,10 @@
 import { createIdSource, type IdSource } from "@/shared/ids";
 import { createRng, restoreRng, type Rng } from "@/shared/rng";
 import { createTileMap, setOwnedRect, type TileMap } from "./tiles";
+import { TICKS_PER_DAY } from "./time";
+
+/** New parks open at 09:00 on Day 1 — nobody founds an empire at midnight. */
+export const START_TIME_TICKS = Math.round(TICKS_PER_DAY * 0.375);
 
 export type Difficulty = "relaxed" | "classic" | "tycoon";
 export type MapSize = "S" | "M" | "L";
@@ -101,7 +105,7 @@ export function createWorld(config: NewParkConfig): World {
   return {
     seed: config.seed,
     rng: createRng(config.seed),
-    time: 0,
+    time: START_TIME_TICKS,
     cash: diff.startCash,
     debt: diff.startDebt,
     meta: {

@@ -22,21 +22,22 @@ export function migrateSave(raw: unknown): SaveFile {
     throw new SaveFormatError("Save file is not an object");
   }
   let save = raw as Record<string, unknown>;
-  let version = save.formatVersion;
-  if (typeof version !== "number" || !Number.isInteger(version) || version < 1) {
+  const rawVersion = save.formatVersion;
+  if (typeof rawVersion !== "number" || !Number.isInteger(rawVersion) || rawVersion < 1) {
     throw new SaveFormatError("Save file has no valid formatVersion");
   }
-  if (version > CURRENT_FORMAT_VERSION) {
+  if (rawVersion > CURRENT_FORMAT_VERSION) {
     throw new SaveFormatError(
-      `Save is from a newer version of the game (v${version} > v${CURRENT_FORMAT_VERSION})`,
+      `Save is from a newer version of the game (v${rawVersion} > v${CURRENT_FORMAT_VERSION})`,
     );
   }
+  let version: number = rawVersion;
   while (version < CURRENT_FORMAT_VERSION) {
     const step = MIGRATIONS[version];
     if (!step) throw new SaveFormatError(`No migration path from save version ${version}`);
     save = step(save);
     const next = save.formatVersion;
-    if (next !== version + 1) {
+    if (typeof next !== "number" || next !== version + 1) {
       throw new SaveFormatError(`Migration from v${version} produced v${String(next)}`);
     }
     version = next;
