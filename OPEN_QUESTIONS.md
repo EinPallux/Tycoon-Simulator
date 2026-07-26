@@ -15,7 +15,7 @@ All Phase-0 questions have been **answered by the project owner** (2026-07-25). 
 | Q5 | Coaster builder | **Modular piece-based** (grid pieces + computed stats; no freeform splines) | `GAME_DESIGN.md §4.6` |
 | Q6 | Campaign shape | **NO set story/campaign.** One **guided sandbox**: free exploration of how to make money and expand, lightly guided | `GAME_DESIGN.md §10.2, §13` (Opportunities + Guided Start + Penny hints), `ROADMAP.md` Phase 4 |
 | Q7 | Language | **English-only** at 1.0 (string catalog still centralized) | `GAME_DESIGN.md §14`, `TECHNICAL_ARCHITECTURE.md §10` |
-| Q8 | Music | **CC0 sourcing** (Kenney Audio + curated), selected in Phase 4 | `ASSET_GUIDE.md §5`, `ROADMAP.md` Phase 4 |
+| Q8 | Music | **CC0 sourcing** (Kenney Audio + curated) — shipped as a *documented deviation* in Phase 4: a procedural chip-orchestra engine (zero assets, zero licenses, mood-reactive) replaced sourced packs | `ASSET_GUIDE.md §5`, `CHANGELOG.md` 0.4.0, `GAME_DESIGN.md §16` |
 
 ### How Q6 is honored (summary)
 No scenario list, no medals, no forced objectives. The game is one open mode. Guidance = **milestones** (celebration tiers), **research** (player-chosen unlock direction), **Opportunities** (optional generated goals with rewards — decline freely, zero punishment), and **Penny's contextual hints**. The Guided Start tutorial is a toggle on the new-park configurator, produces a real park you keep, and fades away.
@@ -24,4 +24,4 @@ No scenario list, no medals, no forced objectives. The game is one open mode. Gu
 
 ## ❓ Open
 
-*(none — next expected owner input is the **"start coding"** green-light for Phase 1, per `ROADMAP.md`)*
+*(none — next expected owner input is the **Phase-5 release checklist**: Vercel deploy, real-hardware perf pass, hallway testers, then the `v1.0.0` tag — and after that, the green-light for Phase 6's leaderboard, per `ROADMAP.md`)*

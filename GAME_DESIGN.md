@@ -250,24 +250,26 @@ Cross-save badges in the hub (examples): *First Blood(less)* — survive 10 brea
 
 ---
 
-## 11. Content catalog v1.0
+## 11. Content catalog v1.0 *(reconciled to as-shipped at 1.0.0-rc)*
 
-Counts are commitments for 1.0; sources per `ASSET_GUIDE.md` mapping table.
+Original counts were planning commitments; the shipped 1.0 roster is below, with the cuts moved to the post-1.0 backlog (`ROADMAP.md`) — 11 distinct ride experiences ship (6 flats + 5 coaster families), which play-testing showed is plenty of variety for the 1.0 arc.
 
-### 11.1 Tracked rides (5 families)
-Steel Coaster · Log Flume · Inverted Coaster · Wild Mouse · Park Monorail — full piece sets from Kenney CoasterKit (stations, supports, trains included). *(Phase 3 ships Wild Mouse + Log Flume; the remaining three are Phase-4/5 content on the same piece system.)*
+### 11.1 Tracked rides (5 families — all shipped ✅)
+Wild Mouse · Log Flume · Steel Streak · Sky Hanger (inverted — train hangs under the rail) · Park Monorail — one shared piece system from Kenney CoasterKit (stations, supports, trains included), stats from geometry.
 
-### 11.2 Flat rides & attractions (12)
-Carousel, Ferris Wheel, Drop Tower, Spinner/Teacups, Swing Ship, Bumper Cars, Haunted Manor (GraveyardKit build), Star Simulator (SpaceKit build), Mini-Golf (MinigolfKit, walk-through attraction), Go-Kart Circuit (RacingKit/ToyCarKit), Swan Boats (WatercraftKit, on placed water basin prop), Park Railroad Station ride (TrainKit). *Flat-ride hero models are composed from kit parts and/or sourced CC0 (Quaternius/PolyPizza) per `ASSET_GUIDE.md §7`.*
+### 11.2 Flat rides & attractions (6 shipped of 12 planned)
+**Shipped:** Carousel, Ferris Wheel, Whirly Teacups (Spinner), Sky Plunge (Drop Tower), Bump-a-Lot Arena (Bumper Cars), Jolly Roger (Swing Ship) — all with animated machine cycles, queues and fare economics.
+**→ post-1.0 backlog:** Haunted Manor, Star Simulator, Mini-Golf, Go-Kart Circuit, Swan Boats, Park Railroad — kit compositions that add roster breadth, not a new system; cut from 1.0 to protect the polish bar.
 
-### 11.3 Stalls & facilities (10)
-Burger Bar, Pizza Corner, Ice-Cream Dream, Candy Stand, Drinks Depot, Coffee Cart, Souvenir Shop, Info Kiosk, Toilets, First-Aid Post (CoasterKit stalls + FoodKit/RestaurantBits props for theming).
+### 11.3 Stalls & facilities (7 shipped of 10 planned)
+**Shipped:** Snack Shack, Candy Cloud, Drinks Depot, Bean Machine (coffee), Wander Wares (souvenirs), Info Kiosk, Toilets — the three planned food-menu variants (Burger/Pizza/Ice-Cream) collapsed into Snack Shack + Candy Cloud for 1.0.
+**→ post-1.0 backlog:** distinct Burger/Pizza/Ice-Cream menus, First-Aid Post (nausea currently recovers ride-side).
 
-### 11.4 Research tree (24 nodes, 4 branches × 6)
-Each branch alternates content unlock → systemic perk → content → … ending in a flagship (e.g., Thrill: Inverted Coaster; Operations: "Predictive Maintenance" −40% breakdowns).
+### 11.4 Research tree (31 nodes shipped — 4 branches, exceeds the 24 planned)
+Each branch alternates content unlock → systemic perk → content → … ending in a flagship (Thrill: Sky Hanger; Operations: "Predictive Maintenance" −60% breakdowns as shipped).
 
-### 11.5 Scenery (60+ pieces, 6 theme sets)
-Nature (NatureKit), Pirate (PirateKit), Space (SpaceKit/ModularSpaceKit), Castle (CastleKit/Medieval), Spooky (GraveyardKit/Spooktober), Winter (HolidayKit) + generic park furniture (benches, bins, lamps, fountains, flags).
+### 11.5 Scenery (75+ pieces shipped, 6 theme sets ✅)
+Nature (NatureKit), Pirate (PirateKit), Space (SpaceKit/ModularSpaceKit), Castle (CastleKit/Medieval), Spooky (GraveyardKit/Spooktober), Winter (HolidayKit) + generic park furniture (benches, bins, lamps, fountains, flags) + 3 earn-only trophy pieces from Opportunities.
 
 ---
 
@@ -346,14 +348,20 @@ Build $2,200–$4,200 · footprint 2×2–4×3 · capacity 8–20 · cycle **7�
 ### 15.4 Park rating terms
 happiness_term = avg(mood)·10 → ×0.35 · rides_term = (Σ excitement capped, variety bonus, uptime %)→ ×0.25 · cleanliness (litter/vomit density, bin coverage) ×0.15 · scenery (beauty density near paths, zone count) ×0.15 · value (avg "fair price" verdicts) ×0.10. Displayed with per-term trend arrows.
 
-### 15.5 Spawning & price elasticity
-Base spawn/day = 20 + rating·0.35, ×weather (sun 1.1, rain 0.55, storm 0.25), ×marketing, ×entry_value where entry_value = clamp(1.6 − entry_price / (6 + 0.02·rating), 0.2, 1.4). Guest budget $40–120 (normal-ish distribution; thrill-seekers richer, families thriftier).
+### 15.5 Spawning & price elasticity *(as tuned for 1.0)*
+Base spawn/day = **10 + rating·0.065** (Phase-5 retune from 20 + 0.35 — the old curve broke even on day 2), ×weather (sun 1.1, rain 0.55, storm 0.25), ×marketing, ×entry_value where entry_value = clamp(1.6 − effective_entry / (6 + 0.02·rating), 0.2, 1.4) and effective_entry = entry_price × the difficulty's elasticity multiplier (§15.7). Cold-start priors keep a fresh park humble: with zero guests the rating's happiness term assumes 0.45 and the value EMA seeds at 0.55 (an empty park rates ~330, not ~500). Guest budget $40–120 (normal-ish distribution; thrill-seekers richer, families thriftier).
 
 ### 15.6 Money anchors
-Start cash $25k (default) · path $10/tile, queue $14 · bench/bin/lamp $50/35/60 · stall build $250–600, item cost-of-goods 30–40% of default price · staff wages/wk: janitor $110, mechanic $160, entertainer $130 · land plot $2,400 + $800·plots_owned · loan: base 8%/yr, +1.5% per tranche, credit limit = 0.6·park_value · marketing $500–5,000 per campaign-week. Target arc (Classic difficulty): break-even by day 8–12, first coaster affordable ~day 15–20, $1M park value ~ hour 6–8 of play.
+Start cash $25k (default) · path $10/tile, queue $14 · bench/bin/lamp $50/35/60 · stall build $250–600, item cost-of-goods 30–40% of default price · staff wages/wk: janitor $110, mechanic $160, entertainer $130 · land plot $2,400 + $800·plots_owned · loan: base 8%/yr, +1.5% per tranche, credit limit = 0.6·park_value · marketing $500–5,000 per campaign-week. Target arc (Classic difficulty): break-even by day 8–12, first coaster affordable ~day 15–20, $1M park value ~ hour 6–8 of play. *(The day-8–12 break-even is CI-asserted: `src/sim/__tests__/balance.test.ts` soaks a $3.5k starter park on Classic and requires solvency by day 12, not before day 6.)*
 
-### 15.7 Difficulty modifiers
-Relaxed: +40% start cash, interest 4%, breakdowns −50%, guests +15% patient. Classic: baseline. Tycoon: −30% start cash, interest 11%, breakdowns +40%, elasticity harsher, events more frequent. Difficulty is per-park, badge-stamped on saves/leaderboard entries.
+### 15.7 Difficulty modifiers *(as shipped — `DIFFICULTY_PRESETS` in `src/sim/world/world.ts`)*
+| Preset | Start cash | Start debt | APR | Breakdowns | Patience | Elasticity | Event gap |
+|---|---|---|---|---|---|---|---|
+| Relaxed | $35,000 (+40%) | $0 | 4% | ×0.5 | ×1.15 | ×0.9 | ×1.25 |
+| Classic | $25,000 | $10,000 | 8% | ×1 | ×1 | ×1 | ×1 |
+| Tycoon | $17,500 (−30%) | $15,000 | 11% | ×1.4 | ×1 | ×1.15 | ×0.8 |
+
+Elasticity multiplies the entry price guests *perceive* (§15.5); event gap multiplies the days between random events (smaller = more chaos). Difficulty is per-park, badge-stamped on saves/leaderboard entries. CI asserts the spread: Relaxed outearns Tycoon on the identical park, all three stay solvent, and the breakdown-chance ratio matches ×1.4/×0.5 exactly.
 
 ---
 
@@ -364,8 +372,9 @@ Placement thunk + dust puff · demolish confetti of parts · coin-pop on every s
 > **As shipped (Phase 4):** dust, confetti, coin-pops, goal confetti and firework
 > barrages run in ONE pooled 320-particle instanced mesh (+1 draw call, zero per-frame
 > GC), all silenced by reduced-motion and fireworks additionally by reduced-flash;
-> rating shimmer + onboard cam + photo mode (light slider, PNG export) live. Still
-> queued for Phase 5: coin daily-ticker, queue-heat hover glow, wind SFX, DOF, stickers.
+> rating shimmer + onboard cam + photo mode (light slider, PNG export) live.
+> **1.0 call:** coin daily-ticker, queue-heat hover glow, wind SFX, DOF and stickers
+> moved to the post-1.0 backlog (ROADMAP) — nice-to-haves that didn't gate release.
 
 ---
 

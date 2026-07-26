@@ -148,12 +148,12 @@ New content requires **no engine changes** — this is the expandability contrac
 
 ## 9. Save system (from day 1)
 
-- **Format:** versioned JSON: `{ formatVersion, appVersion, seed, simTime, world, entities, economy, meta, commandLogTail }`, gzip-compressed (`CompressionStream`) → IndexedDB (`idb-keyval`), one key per slot + rolling autosave (every game day, keep 3).
+- **Format:** versioned JSON: `{ formatVersion, appVersion, seed, simTime, world, entities, economy, meta, commandLogTail }`, stored as a structured clone in IndexedDB (`idb-keyval`), one key per slot + a per-slot backup ladder (`.auto1–.auto3`) rotated on every write. *(Deviation from plan: no gzip `CompressionStream` layer — saves are ~1–3 MB objects, IDB stores them natively, and skipping the byte-stream round-trip keeps the checksum simple. Export still pretty-prints JSON for humans.)*
 - **Migrations:** pure functions `migrate_vN_to_vN+1`; loader chains them; every schema change ships its migration + a fixture test (old save file in `src/sim/save/__fixtures__/`).
 - **v3 (Phase 3):** adds coasters (pieces only — stats/speeds recomputed from geometry on load), staff (paths reset, everyone re-plans), weather, research, loans, events (`nextAt` only; active events don't persist), marketing, per-ride reliability, and the widened 8-bucket expense ledger. v1→v2→v3 chain covered by fixture test.
 - **v4 (Phase 4):** adds lifetime tallies (17 counters), the Opportunities state (offered + active goals persist verbatim with progress), zone names (zones themselves are derived and recomputed on load), earned bonus-scenery unlocks, and the guided-start dismissal flag. Old parks migrate with the checklist pre-dismissed. Chain covered to v4.
 - **Export/import:** the same payload as a downloadable `.wanderpark.json` (schema-validated on import with friendly errors) — backup + friend-sharing without accounts.
-- **Corruption safety:** write-then-swap (never overwrite the only copy), checksum field, "recover previous autosave" UI path.
+- **Corruption safety (as shipped, Phase 5 — `src/ui/saves.ts`):** every record is an envelope `{ save, checksum }` (FNV-1a over the JSON) verified on load; writes rotate the previous good copy into the `.auto1→.auto3` ladder *before* overwriting the main slot, so the newest record is never the only copy; loading walks main → auto1 → auto2 → auto3 and accepts the first record that both verifies and migrates, surfacing a "recovered an earlier autosave" toast when a rung was used. Legacy pre-1.0 bare records load checksum-free. Chain-migration fixtures (`src/sim/save/__tests__/chain.test.ts`) walk a real v1 save through every migration step.
 - **Settings/profile:** small separate keys (settings, profile, achievements) — never entangled with park saves.
 
 ---

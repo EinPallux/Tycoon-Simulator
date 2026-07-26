@@ -5,7 +5,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
-*(nothing yet)*
+*(nothing yet — next up: owner-side release checklist → retag as 1.0.0, then Phase 6 leaderboard)*
+
+## [1.0.0-rc.1] — 2026-07-26 — Phase 5: Release 1.0 (code complete)
+
+The release-candidate build: balance, resilience, crash safety, regression coverage and release metadata. Remaining before the `1.0.0` tag are the owner-side steps — Vercel deploy, real-hardware perf matrix, hallway testers (ROADMAP Phase 5).
+
+### Added
+- **Difficulty modifiers, implemented** (they were doc-only): per-preset multipliers now drive the sim — breakdown chance (Relaxed ×0.5 / Tycoon ×1.4), guest patience (Relaxed ×1.15), price elasticity (Relaxed ×0.9 / Tycoon ×1.15) and random-event cadence (Relaxed ×1.25 gap / Tycoon ×0.8). Full table in `GAME_DESIGN.md §15.7`; spread CI-asserted.
+- **Balance soak harness in CI** (`src/sim/__tests__/balance.test.ts`): builds a real starter park and plays it for in-game weeks across all three difficulties and both unlock modes — asserts the Classic break-even lands in the day-8–12 target (not before day 6), daily books turn positive by day 4, Relaxed outearns Tycoon, everyone stays solvent, and the breakdown-multiplier ratio is exact.
+- **Save resilience**: every stored record is now a `{ save, checksum }` envelope (FNV-1a); each write rotates the previous good copy into a 3-deep backup ladder *before* overwriting, so the newest record is never the only copy; loading walks main → auto1 → auto2 → auto3, takes the first record that verifies *and* migrates, and shows a "recovered an earlier autosave" warning when a rung was used. Legacy bare saves still load. Migration-chain test walks a real v1 fixture stepwise through every schema version.
+- **Crash safety**: `CrashGuard` error boundary — a family-safe crash sheet ("The teacups spun too hard") with Reload and Copy-diagnostics (app version, GPU, stack) — plus a WebGL context-lost watchdog with its own reload overlay.
+- **Key remapping** (Settings → Controls): press-to-rebind for pause, speeds 1–3, build, bulldoze, rotate and photo mode; persisted per profile; Esc cancels; reset-to-defaults.
+- **Release metadata**: OpenGraph/Twitter social card (1200×630), Vercel-aware `metadataBase`, version stamp.
+- **Playwright regression expansion** (5 specs total, run against the production build): new panels/sheets/settings sweep (all five park-panel tabs, the Manual, milestone + park-over sheets, pause-veil save) and a real export → import round-trip via download/filechooser events.
+
+### Changed
+- **Spawn curve retuned** (`§15.5`): base guests/day 20 + 0.35·rating → **10 + 0.065·rating**, and a fresh park's rating now starts humble (happiness prior 0.45, value EMA 0.55 — an empty park rates ~330, not ~500). The old curve broke even on day 2 and trivialized the early game.
+- Content catalog `GAME_DESIGN.md §11` reconciled to as-shipped: 11 ride experiences (6 flats + all 5 coaster families), 7 stalls, 31 research nodes, 75+ scenery pieces; the six remaining planned flats + 3 stall variants moved to the post-1.0 backlog explicitly.
+- Version: `0.4.0` → `1.0.0-rc.1`.
+
+### Fixed
+- **Riders could get trapped by their own ride** (long-standing, exposed by the balance soak): rides exit guests onto queue tiles when those are the only walkable neighbors, but pathfinding refused to route *from* a non-strollable start tile — so after one ride, guests could only re-queue forever and never reached stalls again (stall income silently collapsed as a park's ride got popular). Exits now prefer a true path tile when one exists, and `findPath` lets you step *off* whatever tile you stand on (neighbors still gate).
+- `renameSave` previously rewrote the record without its checksum envelope.
+- Missing `metadataBase` warning during `next build`.
 
 ## [0.4.0] — 2026-07-26 — Phase 4: Progression & Polish
 
