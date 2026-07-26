@@ -13,7 +13,7 @@ import {
   type WeatherKind,
 } from "../balance/phase3";
 import { TICKS_PER_DAY, timeOfDay01 } from "../world/time";
-import type { World } from "../world/world";
+import { DIFFICULTY_PRESETS, type World } from "../world/world";
 import type { SimEvents } from "../api";
 
 function pickNext(world: World, from: WeatherKind): WeatherKind {
@@ -145,10 +145,13 @@ export function eventsSystem(world: World, events: Emitter<SimEvents>): void {
   if (world.time < world.events.nextAt) return;
 
   const eligible = EVENTS.filter((e) => e.eligible(world));
+  const gapMult = DIFFICULTY_PRESETS[world.meta.difficulty].eventGapMult; // §15.7
   world.events.nextAt =
     world.time +
     Math.round(
-      TICKS_PER_DAY * (EVENT_MIN_GAP_DAYS + world.rng.next() * (EVENT_MAX_GAP_DAYS - EVENT_MIN_GAP_DAYS)),
+      TICKS_PER_DAY *
+        gapMult *
+        (EVENT_MIN_GAP_DAYS + world.rng.next() * (EVENT_MAX_GAP_DAYS - EVENT_MIN_GAP_DAYS)),
     );
   if (eligible.length === 0) return;
   const event = world.rng.pick(eligible);

@@ -30,12 +30,33 @@ export const MAP_PRESETS: Record<MapSize, { owned: number }> = {
 
 export const DIFFICULTY_PRESETS: Record<
   Difficulty,
-  { startCash: number; startDebt: number; interestApr: number }
+  {
+    startCash: number;
+    startDebt: number;
+    interestApr: number;
+    /** Breakdown chance multiplier (§15.7: relaxed −50%, tycoon +40%). */
+    breakdownMult: number;
+    /** Queue patience multiplier (relaxed guests wait 15% longer). */
+    patienceMult: number;
+    /** Entry-price elasticity: >1 punishes pricey gates harder. */
+    elasticityMult: number;
+    /** Dynamic-event cadence multiplier (<1 = more frequent). */
+    eventGapMult: number;
+  }
 > = {
   // cents; GAME_DESIGN.md §15.6–15.7
-  relaxed: { startCash: 3_500_000, startDebt: 0, interestApr: 0.04 },
-  classic: { startCash: 2_500_000, startDebt: 1_000_000, interestApr: 0.08 },
-  tycoon: { startCash: 1_750_000, startDebt: 1_500_000, interestApr: 0.11 },
+  relaxed: {
+    startCash: 3_500_000, startDebt: 0, interestApr: 0.04,
+    breakdownMult: 0.5, patienceMult: 1.15, elasticityMult: 0.9, eventGapMult: 1.25,
+  },
+  classic: {
+    startCash: 2_500_000, startDebt: 1_000_000, interestApr: 0.08,
+    breakdownMult: 1, patienceMult: 1, elasticityMult: 1, eventGapMult: 1,
+  },
+  tycoon: {
+    startCash: 1_750_000, startDebt: 1_500_000, interestApr: 0.11,
+    breakdownMult: 1.4, patienceMult: 1, elasticityMult: 1.15, eventGapMult: 0.8,
+  },
 };
 
 export interface PlacedEntity {
@@ -426,8 +447,9 @@ export function createWorld(config: NewParkConfig): World {
     litter: [],
     rating: {
       value: 0,
-      terms: { happiness: 0.7, rides: 0, cleanliness: 1, scenery: 0, value: 0.7 },
-      valueEma: 0.7,
+      // Neutral priors — reputation is earned, not granted (Phase-5 tuning).
+      terms: { happiness: 0.45, rides: 0, cleanliness: 1, scenery: 0, value: 0.55 },
+      valueEma: 0.55,
     },
     milestoneTier: -1,
     spawnAcc: 0,

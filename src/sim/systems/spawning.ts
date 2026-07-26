@@ -19,7 +19,7 @@ import { addGuest } from "../entities/guests";
 import { hasPerk } from "../research";
 import { isStrollable } from "../world/pathfind";
 import { dayOfTime, TICKS_PER_DAY, timeOfDay01 } from "../world/time";
-import type { World } from "../world/world";
+import { DIFFICULTY_PRESETS, type World } from "../world/world";
 import type { SimEvents } from "../api";
 import { spawnModifiers } from "./weather";
 
@@ -38,7 +38,9 @@ export function spawningSystem(world: World, events: Emitter<SimEvents>): void {
   const curve = dayCurve(t01);
   if (curve <= 0) return;
 
-  const entryDollars = world.economy.entryPrice / 100;
+  // §15.7: tycoon elasticity punishes pricey gates harder, relaxed forgives.
+  const elasticity = DIFFICULTY_PRESETS[world.meta.difficulty].elasticityMult;
+  const entryDollars = (world.economy.entryPrice / 100) * elasticity;
   const value = entryValue(entryDollars, world.rating.value);
   const mouth = hasPerk(world, "word-of-mouth") ? 1.1 : 1;
   const perDay =

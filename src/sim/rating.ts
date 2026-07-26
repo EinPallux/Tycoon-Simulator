@@ -19,7 +19,9 @@ export function computeRating(world: World): void {
   const guests = world.guests;
 
   // Happiness: average mood (neutral-ish baseline with no guests).
-  let happiness = 0.7;
+  // No guests = no proof of happiness: a neutral-low prior, earned upward.
+  // (Phase-5 tuning: the old 0.7 default handed fresh parks ~500 rating.)
+  let happiness = 0.45;
   if (guests.count > 0) {
     let sum = 0;
     for (let i = 0; i < guests.count; i++) sum += guests.mood[i] as number;
