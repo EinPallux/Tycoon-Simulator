@@ -19,7 +19,7 @@ import {
 import { isOwned } from "../world/tiles";
 import type { World } from "../world/world";
 
-export type CoasterFamily = "mouse" | "flume";
+export type CoasterFamily = "mouse" | "flume" | "steel" | "hanging" | "monorail";
 
 export const FAMILY_INFO: Record<
   CoasterFamily,
@@ -27,6 +27,9 @@ export const FAMILY_INFO: Record<
 > = {
   mouse: { name: "Wild Mouse", baseCost: 800_00 * 10, ticket: 450, runningPerDay: 2_600, smoothness: 0.4 },
   flume: { name: "Log Flume", baseCost: 900_00 * 10, ticket: 400, runningPerDay: 2_400, smoothness: 0.7 },
+  steel: { name: "Steel Streak", baseCost: 1_200_00 * 10, ticket: 500, runningPerDay: 3_200, smoothness: 0.55 },
+  hanging: { name: "Sky Hanger", baseCost: 1_350_00 * 10, ticket: 550, runningPerDay: 3_400, smoothness: 0.5 },
+  monorail: { name: "Park Monorail", baseCost: 700_00 * 10, ticket: 250, runningPerDay: 1_800, smoothness: 0.9 },
 };
 
 export interface CoasterStats {

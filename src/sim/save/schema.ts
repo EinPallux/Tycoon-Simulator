@@ -49,7 +49,7 @@ const trackNodeSchema = z.object({
 
 const coasterSchema = z.object({
   entityId: z.number().int().positive(),
-  family: z.enum(["mouse", "flume"]),
+  family: z.enum(["mouse", "flume", "steel", "hanging", "monorail"]),
   pieces: z.array(
     z.object({
       type: z.enum([
@@ -213,10 +213,10 @@ export const saveV4Schema = z.object({
   }),
   research: z.object({
     done: z.object({
-      thrill: z.number().int().min(0).max(6),
-      family: z.number().int().min(0).max(6),
-      food: z.number().int().min(0).max(6),
-      ops: z.number().int().min(0).max(6),
+      thrill: z.number().int().min(0).max(8),
+      family: z.number().int().min(0).max(8),
+      food: z.number().int().min(0).max(8),
+      ops: z.number().int().min(0).max(8),
     }),
     active: z.enum(["thrill", "family", "food", "ops"]).nullable(),
     funding: z.number().int().min(0).max(2),

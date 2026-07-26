@@ -42,6 +42,23 @@ export function TopBar() {
     prevCash.current = cash;
   }, [cash]);
 
+  // Rating shimmer on tick-up (juice pass §16).
+  const ratingRef = useRef<HTMLSpanElement>(null);
+  const prevRating = useRef(ratingValue);
+  useEffect(() => {
+    if (ratingValue > prevRating.current && ratingRef.current) {
+      ratingRef.current.animate(
+        [
+          { transform: "scale(1)", filter: "brightness(1)" },
+          { transform: "scale(1.15)", filter: "brightness(1.8)", offset: 0.35 },
+          { transform: "scale(1)", filter: "brightness(1)" },
+        ],
+        { duration: 500, easing: "ease-out" },
+      );
+    }
+    prevRating.current = ratingValue;
+  }, [ratingValue]);
+
   const speedButton = (s: GameSpeed, label: string): React.ReactNode => (
     <button
       key={s}
@@ -109,7 +126,9 @@ export function TopBar() {
         >
           <span className="unskew flex items-center gap-1.5 text-sm font-bold text-paper-050">
             <span aria-hidden>⭐</span>
-            <span className="tabular">{ratingValue}</span>
+            <span ref={ratingRef} className="tabular inline-block">
+              {ratingValue}
+            </span>
           </span>
         </button>
       </div>

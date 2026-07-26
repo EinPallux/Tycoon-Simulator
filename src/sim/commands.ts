@@ -427,7 +427,7 @@ function execBuildCoaster(
   const tiles = pieceTiles(station);
   const minX = Math.min(...tiles.map((t) => t[0]));
   const minZ = Math.min(...tiles.map((t) => t[1]));
-  const defId = family === "mouse" ? "coaster/mouse" : "coaster/flume";
+  const defId = `coaster/${family}`;
   const rot = station.entry.dir;
   const verdict = canPlaceEntity(world, defId, minX, minZ, rot);
   if (!verdict.ok) return { ok: false, reason: `Station: ${verdict.reason}` };

@@ -103,7 +103,7 @@ export function BuildController() {
         const tiles = pieceTiles({ type: "station", entry });
         const minX = Math.min(...tiles.map((tile) => tile[0]));
         const minZ = Math.min(...tiles.map((tile) => tile[1]));
-        const defId = t.family === "mouse" ? "coaster/mouse" : "coaster/flume";
+        const defId = `coaster/${t.family}`;
         const verdict = !isCoasterUnlocked(sim.world, t.family)
           ? { ok: false as const, reason: "Research this coaster type first" }
           : canPlaceEntity(sim.world, defId, minX, minZ, t.rot);

@@ -51,7 +51,7 @@ import { DAYS_PER_WEEK, dayOfTime } from "./world/time";
 
 export interface SimEvents {
   "entity-added": { entity: PlacedEntity };
-  "entity-removed": { id: number };
+  "entity-removed": { id: number; x: number; z: number };
   /** Tile indices whose surface changed (auto-tiling re-renders neighbors too). */
   "surface-changed": { indices: number[] };
   "cash-changed": { cash: number };
@@ -104,7 +104,7 @@ export function createSimHandle(world: World): SimHandle {
   const emitPatch = (patch: Patch, reverted: boolean): void => {
     const added = reverted ? patch.entitiesRemoved : patch.entitiesAdded;
     const removed = reverted ? patch.entitiesAdded : patch.entitiesRemoved;
-    for (const e of removed) events.emit("entity-removed", { id: e.id });
+    for (const e of removed) events.emit("entity-removed", { id: e.id, x: e.x, z: e.z });
     for (const e of added) events.emit("entity-added", { entity: e });
     if (patch.tileChanges.length > 0) {
       events.emit("surface-changed", { indices: patch.tileChanges.map((c) => c.idx) });
@@ -229,7 +229,7 @@ export function createSimHandle(world: World): SimHandle {
         world.debt -= paydown;
         world.cash -= paydown;
         world.loans.missedPayments = 2; // one more chance before the next seizure
-        events.emit("entity-removed", { id: bestId });
+        events.emit("entity-removed", { id: bestId, x: entity?.x ?? 0, z: entity?.z ?? 0 });
         events.emit("notify", {
           tone: "danger",
           message: `🏦 The bank seized and auctioned ${name}! $${(paydown / 100).toFixed(0)} went to your debt. Pay your interest!`,

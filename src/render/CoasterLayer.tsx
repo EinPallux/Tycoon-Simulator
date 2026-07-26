@@ -289,11 +289,22 @@ function carMatrix(coaster: Coaster, arc: number, out: Matrix4): void {
   out.setPosition(carPos);
 }
 
+const TRAIN_CARS: Record<string, ModelAssetId[]> = {
+  mouse: ["coaster/train-front", "coaster/train-car"],
+  flume: ["coaster/train-log", "coaster/train-log"],
+  steel: ["coaster/train-steel", "coaster/train-steel"],
+  hanging: ["coaster/train-hanging", "coaster/train-hanging"],
+  monorail: ["coaster/train-monorail"],
+};
+
+/** Per-family car fixes: the hanging car is authored nose −x, dangling. */
+const CAR_FIX: Record<string, { y: number; yaw: number }> = {
+  hanging: { y: 0.32, yaw: -Math.PI / 2 },
+};
+
 function CoasterTrain({ coaster }: { coaster: Coaster }) {
-  const cars: ModelAssetId[] =
-    coaster.family === "flume"
-      ? ["coaster/train-log", "coaster/train-log"]
-      : ["coaster/train-front", "coaster/train-car"];
+  const cars: ModelAssetId[] = TRAIN_CARS[coaster.family] ?? (TRAIN_CARS.mouse as ModelAssetId[]);
+  const fix = CAR_FIX[coaster.family];
   const refs = useRef<(Group | null)[]>([]);
 
   useFrame(() => {
@@ -332,7 +343,13 @@ function CoasterTrain({ coaster }: { coaster: Coaster }) {
             refs.current[k] = el;
           }}
         >
-          <TrainCarModel assetId={assetId} />
+          {fix ? (
+            <group position={[0, fix.y, 0]} rotation={[0, fix.yaw, 0]}>
+              <TrainCarModel assetId={assetId} />
+            </group>
+          ) : (
+            <TrainCarModel assetId={assetId} />
+          )}
         </group>
       ))}
     </>

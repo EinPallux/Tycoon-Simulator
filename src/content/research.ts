@@ -39,6 +39,8 @@ export const RESEARCH_BRANCHES: ResearchBranch[] = [
       { id: "thrill-4", name: "Jolly Roger", blurb: "A ship that refuses the sea.", days: 2, unlocks: ["ride/swing"] },
       { id: "thrill-5", name: "Log Flume Coaster", blurb: "Wet track, dry humor.", days: 3, unlocksCoasters: ["flume"] },
       { id: "thrill-6", name: "Extreme Engineering", blurb: "Coaster supports +2 height.", days: 2.5, perk: "tall-supports" },
+      { id: "thrill-7", name: "Steel Streak Coaster", blurb: "Smooth, fast, shiny.", days: 3.5, unlocksCoasters: ["steel"] },
+      { id: "thrill-8", name: "Sky Hanger Coaster", blurb: "The track is the ceiling.", days: 4, unlocksCoasters: ["hanging"] },
     ],
   },
   {
@@ -52,6 +54,7 @@ export const RESEARCH_BRANCHES: ResearchBranch[] = [
       { id: "family-4", name: "Patient Little Legs", blurb: "Queue patience +25%.", days: 2, perk: "patience" },
       { id: "family-5", name: "Pirate Landscaping", blurb: "Palms with attitude.", days: 1.5, unlocks: ["scenery/tree-palm", "scenery/tree-palm-bend"] },
       { id: "family-6", name: "Word of Mouth", blurb: "Guest arrivals +10%.", days: 2.5, perk: "word-of-mouth" },
+      { id: "family-7", name: "Park Monorail", blurb: "Sightseeing at a sensible pace.", days: 2.5, unlocksCoasters: ["monorail"] },
     ],
   },
   {

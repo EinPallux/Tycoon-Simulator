@@ -13,9 +13,11 @@ import { useAppStore } from "@/ui/stores/appStore";
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let sfxGain: GainNode | null = null;
+let musicGain: GainNode | null = null;
 let wallaGain: GainNode | null = null;
 let wallaStarted = false;
 let lastClinkAt = 0;
+const unlockHooks: Array<() => void> = [];
 
 function ensureContext(): boolean {
   if (typeof window === "undefined") return false;
@@ -26,6 +28,8 @@ function ensureContext(): boolean {
     master.connect(ctx.destination);
     sfxGain = ctx.createGain();
     sfxGain.connect(master);
+    musicGain = ctx.createGain();
+    musicGain.connect(master);
     applyVolumes();
     return true;
   } catch {
@@ -34,10 +38,11 @@ function ensureContext(): boolean {
 }
 
 export function applyVolumes(): void {
-  if (!ctx || !master || !sfxGain) return;
-  const { masterVolume, sfxVolume } = useAppStore.getState().settings;
+  if (!ctx || !master || !sfxGain || !musicGain) return;
+  const { masterVolume, sfxVolume, musicVolume } = useAppStore.getState().settings;
   master.gain.value = (masterVolume / 100) * 0.8;
   sfxGain.gain.value = sfxVolume / 100;
+  musicGain.gain.value = (musicVolume / 100) * 0.55;
 }
 
 /** Call from a user-gesture handler once; browsers require it. */
@@ -45,6 +50,18 @@ export function unlockAudio(): void {
   if (!ensureContext()) return;
   if (ctx && ctx.state === "suspended") void ctx.resume();
   startWalla();
+  for (const hook of unlockHooks.splice(0)) hook();
+}
+
+/** Music engine hookup: runs now if unlocked, else on first gesture. */
+export function onAudioUnlocked(hook: () => void): void {
+  if (ctx && ctx.state === "running") hook();
+  else unlockHooks.push(hook);
+}
+
+export function musicBus(): { ctx: AudioContext; out: GainNode } | null {
+  if (!ctx || !musicGain) return null;
+  return { ctx, out: musicGain };
 }
 
 function tone(
@@ -98,6 +115,23 @@ export const sfx = {
     tone(784, 0.3, "square", 0.14, 0.26);
     tone(1046, 0.42, "triangle", 0.12, 0.39);
   },
+  /** Firework crackle: short noise-ish burst via detuned saws. */
+  pop(): void {
+    if (!ensureContext()) return;
+    tone(900, 0.07, "sawtooth", 0.07, 0, 220);
+    tone(1400, 0.05, "square", 0.05, 0.01, 500);
+  },
+  /** Gentle two-note chime (zones, goals). */
+  chime(): void {
+    if (!ensureContext()) return;
+    tone(1318, 0.22, "sine", 0.1);
+    tone(1760, 0.34, "sine", 0.09, 0.12);
+  },
+  /** Camera / photo shutter-ish whoosh. */
+  whoosh(): void {
+    if (!ensureContext()) return;
+    tone(320, 0.18, "triangle", 0.08, 0, 900);
+  },
 };
 
 /** Brown-noise walla bed; call setWallaLevel with guest density 0..1. */
@@ -128,7 +162,8 @@ function startWalla(): void {
 
 export function setWallaLevel(density01: number): void {
   if (!wallaGain || !ctx) return;
-  const { musicVolume } = useAppStore.getState().settings;
-  const target = Math.min(0.16, density01 * 0.16) * (musicVolume / 100);
+  // Walla rides the SFX fader — music got its own channel in Phase 4.
+  const { sfxVolume } = useAppStore.getState().settings;
+  const target = Math.min(0.16, density01 * 0.16) * (sfxVolume / 100);
   wallaGain.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.6);
 }

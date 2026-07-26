@@ -4,6 +4,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { unlockAudio } from "@/audio/bus";
+import { setMusicMood } from "@/audio/music";
 import { useAppStore } from "@/ui/stores/appStore";
 import { TabStrip, type TabDef } from "@/ui/kit/TabStrip";
 import { ToastRail } from "@/ui/kit/Toast";
@@ -35,6 +37,17 @@ export default function HubPage() {
   useEffect(() => {
     if (hydrated && !profile) router.replace("/");
   }, [hydrated, profile, router]);
+
+  // Menu music (starts on the first gesture — browsers insist).
+  useEffect(() => {
+    const unlock = (): void => unlockAudio();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    setMusicMood("menu");
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      setMusicMood(null);
+    };
+  }, []);
 
   return (
     <main className="facet-field flex min-h-dvh flex-col">

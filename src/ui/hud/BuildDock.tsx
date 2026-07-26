@@ -69,6 +69,9 @@ function iconFor(def: PlaceableDef): string {
 const COASTER_FAMILIES: { family: CoasterFamily; icon: string; researchHint: string }[] = [
   { family: "mouse", icon: "🐭", researchHint: "Research: Thrill 3" },
   { family: "flume", icon: "🪵", researchHint: "Research: Thrill 5" },
+  { family: "steel", icon: "🚄", researchHint: "Research: Thrill 7" },
+  { family: "hanging", icon: "🦇", researchHint: "Research: Thrill 8" },
+  { family: "monorail", icon: "🚝", researchHint: "Research: Family 7" },
 ];
 
 export function BuildDock() {

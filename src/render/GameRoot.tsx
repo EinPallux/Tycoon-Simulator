@@ -17,6 +17,8 @@ import { useGameStore } from "@/ui/stores/gameStore";
 import { useAppStore } from "@/ui/stores/appStore";
 import { toast, ToastRail } from "@/ui/kit/Toast";
 import { applyVolumes, setWallaLevel, sfx, unlockAudio } from "@/audio/bus";
+import { setMusicMood, type MusicMood } from "@/audio/music";
+import { timeOfDay01 } from "@/sim/world/time";
 import { WorldScene } from "./WorldScene";
 import { renderClock } from "./stats";
 import { Hud } from "@/ui/hud/Hud";
@@ -78,6 +80,7 @@ export default function GameRoot() {
     return () => {
       window.removeEventListener("pointerdown", unlock);
       unsub();
+      setMusicMood(null); // leaving the park stops the soundtrack
     };
   }, []);
 
@@ -223,6 +226,11 @@ function useSimLoop(sim: SimHandle | null): void {
         const active = sim.world.events.active;
         const eventLabel = active ? (EVENT_LABELS[active.kind] ?? null) : null;
         useGameStore.getState().setHud({ clock, eventLabel });
+        // Soundtrack mood: storm > night > day (audio v2).
+        const t01 = timeOfDay01(sim.world.time);
+        const mood: MusicMood =
+          sim.world.weather.current === "storm" ? "storm" : t01 > 0.27 && t01 < 0.76 ? "day" : "night";
+        setMusicMood(mood);
       }
     };
     raf = requestAnimationFrame(frame);
