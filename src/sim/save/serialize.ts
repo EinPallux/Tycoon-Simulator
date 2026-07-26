@@ -19,7 +19,7 @@ import type { Opportunity, PlacedEntity, World } from "../world/world";
 import { migrateSave } from "./migrate";
 import { CURRENT_FORMAT_VERSION, type SaveFile } from "./schema";
 
-export const APP_VERSION = "0.4.0";
+export const APP_VERSION = "1.0.0-rc.1";
 
 export function serializeWorld(world: World): SaveFile {
   const g = world.guests;
