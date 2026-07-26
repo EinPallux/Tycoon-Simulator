@@ -10,7 +10,8 @@ import { CURRENT_FORMAT_VERSION, saveV4Schema, type SaveFile } from "./schema";
 type Migration = (save: Record<string, unknown>) => Record<string, unknown>;
 
 /** Keyed by the version the migration upgrades FROM. */
-const MIGRATIONS: Record<number, Migration> = {
+/** Exported for the chain regression test. */
+export const MIGRATIONS: Record<number, Migration> = {
   /**
    * v1 (Phase 1, builds only) → v2 (Phase 2, the living park).
    * Parks gain an empty guest population, default economy books, and
