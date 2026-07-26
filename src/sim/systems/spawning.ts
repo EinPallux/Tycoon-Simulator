@@ -88,4 +88,5 @@ export function spawningSystem(world: World, events: Emitter<SimEvents>): void {
     world.guests.hunger[slot] = 42 + rng.range(0, 16);
     world.guests.thirst[slot] = 42 + rng.range(0, 16);
   }
+  world.tallies.peakGuests = Math.max(world.tallies.peakGuests, world.guests.count);
 }

@@ -17,7 +17,6 @@ import { useGameStore } from "@/ui/stores/gameStore";
 import { useAppStore } from "@/ui/stores/appStore";
 import { toast, ToastRail } from "@/ui/kit/Toast";
 import { applyVolumes, setWallaLevel, sfx, unlockAudio } from "@/audio/bus";
-import { formatMoney } from "@/ui/format";
 import { WorldScene } from "./WorldScene";
 import { renderClock } from "./stats";
 import { Hud } from "@/ui/hud/Hud";
@@ -162,8 +161,8 @@ function wireSimEvents(sim: SimHandle): void {
   sim.events.on("rating-changed", ({ value }) =>
     useGameStore.getState().setHud({ ratingValue: value }),
   );
-  sim.events.on("milestone", ({ name, award }) => {
-    toast("success", `🏆 Milestone: ${name}! Award: ${formatMoney(award)}`);
+  sim.events.on("milestone", ({ tier, name, award }) => {
+    useGameStore.getState().setMilestoneSheet({ tier, name, award });
     sfx.fanfare();
   });
   sim.events.on("notify", ({ tone, message }) => toast(tone, message));

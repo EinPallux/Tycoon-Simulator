@@ -234,7 +234,8 @@ describe("staff & breakdowns", () => {
     ride.reliability = 10;
     sim.dispatch({ type: "hire-staff", role: "mechanic" });
     sim.tick(1200);
-    expect(ride.phase).not.toBe("broken");
+    // The repair happened (a later random re-break is legitimate wear).
+    expect(sim.world.tallies.mechanicRepairs).toBeGreaterThanOrEqual(1);
     expect(ride.reliability).toBeGreaterThan(50);
   });
 

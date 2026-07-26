@@ -5,7 +5,7 @@
  * fixture test in __tests__/.
  */
 
-import { CURRENT_FORMAT_VERSION, saveV3Schema, type SaveFile } from "./schema";
+import { CURRENT_FORMAT_VERSION, saveV4Schema, type SaveFile } from "./schema";
 
 type Migration = (save: Record<string, unknown>) => Record<string, unknown>;
 
@@ -95,6 +95,49 @@ const MIGRATIONS: Record<number, Migration> = {
       marketing: { activeKind: null, activeEndsAt: 0, hangoverUntil: 0 },
     };
   },
+  /**
+   * v3 (coasters & chaos) → v4 (progression & polish): lifetime tallies,
+   * the Opportunities engine, zone names, bonus unlocks, guided-start flag.
+   * Mature parks skip the Guided Start rather than suddenly tutoring.
+   */
+  3: (save) => {
+    const time = typeof save.time === "number" ? save.time : 0;
+    const meta = save.meta as { guidedStart?: boolean } | undefined;
+    return {
+      ...save,
+      formatVersion: 4,
+      tallies: {
+        peakGuests: 0,
+        happyLeavers: 0,
+        guestsLeft: 0,
+        stallSales: 0,
+        toiletUses: 0,
+        coasterRiders: 0,
+        breakdowns: 0,
+        lastBreakdownAt: -100_000,
+        mechanicRepairs: 0,
+        litterSwept: 0,
+        sceneryPlaced: 0,
+        loansTaken: 0,
+        centsRepaid: 0,
+        campaignsRun: 0,
+        researchCompleted: 0,
+        zonesFormed: 0,
+        opportunitiesDone: 0,
+      },
+      opportunities: {
+        offered: null,
+        offerExpiresAt: 0,
+        active: [],
+        nextOfferAt: time + 1080,
+        idCounter: 0,
+        completed: 0,
+      },
+      zoneNames: {},
+      bonusUnlocks: [],
+      guidedDismissed: !(meta?.guidedStart ?? false),
+    };
+  },
 };
 
 export class SaveFormatError extends Error {}
@@ -124,7 +167,7 @@ export function migrateSave(raw: unknown): SaveFile {
     }
     version = next;
   }
-  const parsed = saveV3Schema.safeParse(save);
+  const parsed = saveV4Schema.safeParse(save);
   if (!parsed.success) {
     throw new SaveFormatError(`Save failed validation: ${parsed.error.issues[0]?.message ?? "?"}`);
   }

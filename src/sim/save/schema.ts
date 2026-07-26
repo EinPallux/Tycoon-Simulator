@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 
-export const CURRENT_FORMAT_VERSION = 3;
+export const CURRENT_FORMAT_VERSION = 4;
 
 export const placedEntitySchema = z.object({
   id: z.number().int().positive(),
@@ -97,8 +97,46 @@ const guestSchema = z.object({
   thoughts: z.array(z.string()).max(8),
 });
 
-export const saveV3Schema = z.object({
-  formatVersion: z.literal(3),
+const talliesSchema = z.object({
+  peakGuests: z.number().int().nonnegative(),
+  happyLeavers: z.number().int().nonnegative(),
+  guestsLeft: z.number().int().nonnegative(),
+  stallSales: z.number().int().nonnegative(),
+  toiletUses: z.number().int().nonnegative(),
+  coasterRiders: z.number().int().nonnegative(),
+  breakdowns: z.number().int().nonnegative(),
+  lastBreakdownAt: z.number().int(),
+  mechanicRepairs: z.number().int().nonnegative(),
+  litterSwept: z.number().int().nonnegative(),
+  sceneryPlaced: z.number().int().nonnegative(),
+  loansTaken: z.number().int().nonnegative(),
+  centsRepaid: z.number().int().nonnegative(),
+  campaignsRun: z.number().int().nonnegative(),
+  researchCompleted: z.number().int().nonnegative(),
+  zonesFormed: z.number().int().nonnegative(),
+  opportunitiesDone: z.number().int().nonnegative(),
+});
+
+const opportunitySchema = z.object({
+  id: z.number().int().positive(),
+  templateId: z.string(),
+  category: z.string(),
+  text: z.string(),
+  kind: z.enum(["reach", "delta", "hold-days"]),
+  target: z.number(),
+  baseline: z.number(),
+  progress: z.number().nonnegative(),
+  deadlineAt: z.number().int().nonnegative(),
+  acceptedAt: z.number().int().nonnegative(),
+  reward: z.object({
+    kind: z.enum(["cash", "research", "scenery", "campaign"]),
+    amount: z.number().int().nonnegative(),
+    itemId: z.string().optional(),
+  }),
+});
+
+export const saveV4Schema = z.object({
+  formatVersion: z.literal(4),
   appVersion: z.string(),
   seed: z.number(),
   rngState: z.number(),
@@ -196,7 +234,20 @@ export const saveV3Schema = z.object({
     activeEndsAt: z.number().int().nonnegative(),
     hangoverUntil: z.number().int().nonnegative(),
   }),
+  // ── Phase 4 ──
+  tallies: talliesSchema,
+  opportunities: z.object({
+    offered: opportunitySchema.nullable(),
+    offerExpiresAt: z.number().int().nonnegative(),
+    active: z.array(opportunitySchema).max(4),
+    nextOfferAt: z.number().int().nonnegative(),
+    idCounter: z.number().int().nonnegative(),
+    completed: z.number().int().nonnegative(),
+  }),
+  zoneNames: z.record(z.string(), z.string()),
+  bonusUnlocks: z.array(z.string()),
+  guidedDismissed: z.boolean(),
 });
 
-export type SaveV3 = z.infer<typeof saveV3Schema>;
-export type SaveFile = SaveV3; // latest version alias
+export type SaveV4 = z.infer<typeof saveV4Schema>;
+export type SaveFile = SaveV4; // latest version alias

@@ -12,13 +12,14 @@ import { getPlaceableDef } from "@/content/catalog";
 import { computeRun, computeStats, type Coaster } from "../coaster/coaster";
 import { addGuest, createGuestsPool, GUEST_STATE, type GuestCold } from "../entities/guests";
 import { createResearchState } from "../world/world";
+import { recomputeZones } from "../systems/zones";
 import { footprintTiles } from "../validate";
 import { createTileMap, tileIndex } from "../world/tiles";
-import type { PlacedEntity, World } from "../world/world";
+import type { Opportunity, PlacedEntity, World } from "../world/world";
 import { migrateSave } from "./migrate";
 import { CURRENT_FORMAT_VERSION, type SaveFile } from "./schema";
 
-export const APP_VERSION = "0.3.0";
+export const APP_VERSION = "0.4.0";
 
 export function serializeWorld(world: World): SaveFile {
   const g = world.guests;
@@ -120,8 +121,25 @@ export function serializeWorld(world: World): SaveFile {
       activeEndsAt: world.marketing.active?.endsAt ?? 0,
       hangoverUntil: world.marketing.hangoverUntil,
     },
+    tallies: { ...world.tallies },
+    opportunities: {
+      offered: world.opportunities.offered ? cloneOpportunity(world.opportunities.offered) : null,
+      offerExpiresAt: world.opportunities.offerExpiresAt,
+      active: world.opportunities.active.map(cloneOpportunity),
+      nextOfferAt: world.opportunities.nextOfferAt,
+      idCounter: world.opportunities.idCounter,
+      completed: world.opportunities.completed,
+    },
+    zoneNames: { ...world.zoneNames },
+    bonusUnlocks: [...world.bonusUnlocks],
+    guidedDismissed: world.guidedDismissed,
   };
 }
+
+const cloneOpportunity = (opp: Opportunity): Opportunity => ({
+  ...opp,
+  reward: { ...opp.reward },
+});
 
 const structuredClonePlain = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 
@@ -194,6 +212,19 @@ export function worldFromSave(raw: unknown): World {
         : null,
       hangoverUntil: save.marketing.hangoverUntil,
     },
+    tallies: { ...save.tallies },
+    opportunities: {
+      offered: save.opportunities.offered ? cloneOpportunity(save.opportunities.offered) : null,
+      offerExpiresAt: save.opportunities.offerExpiresAt,
+      active: save.opportunities.active.map(cloneOpportunity),
+      nextOfferAt: save.opportunities.nextOfferAt,
+      idCounter: save.opportunities.idCounter,
+      completed: save.opportunities.completed,
+    },
+    zones: [],
+    zoneNames: { ...save.zoneNames },
+    bonusUnlocks: [...save.bonusUnlocks],
+    guidedDismissed: save.guidedDismissed,
   };
 
   // Revive coasters (stats & speeds recomputed — geometry is the truth).
@@ -276,6 +307,11 @@ export function worldFromSave(raw: unknown): World {
     cold.ridesRidden = saved.ridesRidden;
     cold.thoughts = [...saved.thoughts];
   }
+
+  // Zones are derived — rebuild them now that placeables are in.
+  recomputeZones(world);
+  // A fresh load never re-announces zones that already existed.
+  world.tallies.zonesFormed = save.tallies.zonesFormed;
 
   return world;
 }

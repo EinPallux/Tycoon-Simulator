@@ -3,6 +3,7 @@
  * (funding → progress-days → node completion).
  */
 
+import { BONUS_SCENERY } from "@/content/goals";
 import {
   FUNDING_LEVELS,
   RESEARCH_BRANCHES,
@@ -14,6 +15,8 @@ import type { PlaceableDef } from "@/content/types";
 import { addExpense } from "./economy";
 import type { CoasterFamily } from "./coaster/coaster";
 import type { World } from "./world/world";
+
+const BONUS_SCENERY_SET = new Set<string>(BONUS_SCENERY);
 
 export const hasPerk = (world: World, perk: string): boolean =>
   world.research.perks.includes(perk);
@@ -32,6 +35,8 @@ function unlockedIds(world: World): Set<string> {
 }
 
 export function isDefUnlocked(world: World, def: PlaceableDef): boolean {
+  // Opportunity trophies unlock only by earning them — even in freeplay.
+  if (BONUS_SCENERY_SET.has(def.id)) return world.bonusUnlocks.includes(def.id);
   if (world.meta.freeplayUnlocks) return true;
   if (def.category === "scenery" && !RESEARCH_GATED_SCENERY.has(def.id)) return true;
   if (def.category === "stall" || def.category === "ride" || RESEARCH_GATED_SCENERY.has(def.id)) {

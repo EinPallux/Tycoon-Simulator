@@ -32,7 +32,13 @@ export type Tool =
   | { kind: "coaster"; family: CoasterFamily; rot: number };
 
 export type DockCategory = "paths" | "scenery" | "stalls" | "rides" | "coasters" | "staff" | null;
-export type ParkPanelTab = "finances" | "guests" | "rating" | "research";
+export type ParkPanelTab = "goals" | "finances" | "guests" | "rating" | "research";
+
+export interface MilestoneSheetData {
+  tier: number;
+  name: string;
+  award: number;
+}
 
 export interface CoasterDraft {
   family: CoasterFamily;
@@ -67,6 +73,12 @@ interface GameStore {
   eventLabel: string | null;
   /** Set when the bank forecloses — the park-over sheet. */
   parkOver: string | null;
+  /** Milestone celebration overlay data. */
+  milestoneSheet: MilestoneSheetData | null;
+  /** Park Manual codex open. */
+  manualOpen: boolean;
+  /** Selected zone key (banner click → rename panel). */
+  selectedZone: string | null;
 
   // Interaction state
   tool: Tool;
@@ -117,6 +129,9 @@ interface GameStore {
   togglePerfOverlay: () => void;
   setVeilOpen: (open: boolean) => void;
   setParkOver: (reason: string | null) => void;
+  setMilestoneSheet: (data: MilestoneSheetData | null) => void;
+  setManualOpen: (open: boolean) => void;
+  selectZone: (key: string | null) => void;
   startCoasterDraft: (family: CoasterFamily, entry: TrackNode) => void;
   /** Append a piece at the head. Returns false (with no change) if invalid. */
   addDraftPiece: (type: PieceType) => boolean;
@@ -148,6 +163,9 @@ export const useGameStore = create<GameStore>()(
     weather: "sun",
     eventLabel: null,
     parkOver: null,
+    milestoneSheet: null,
+    manualOpen: false,
+    selectedZone: null,
 
     tool: { kind: "select" },
     dockCategory: null,
@@ -214,6 +232,9 @@ export const useGameStore = create<GameStore>()(
     togglePerfOverlay: () => set((s) => ({ perfOverlay: !s.perfOverlay })),
     setVeilOpen: (open) => set({ veilOpen: open }),
     setParkOver: (reason) => set({ parkOver: reason }),
+    setMilestoneSheet: (data) => set({ milestoneSheet: data }),
+    setManualOpen: (open) => set({ manualOpen: open }),
+    selectZone: (key) => set({ selectedZone: key }),
 
     startCoasterDraft: (family, entry) =>
       set((s) => ({
@@ -272,13 +293,15 @@ export const useGameStore = create<GameStore>()(
 
     escape: () => {
       const s = get();
-      if (s.veilOpen) set({ veilOpen: false });
+      if (s.milestoneSheet !== null) set({ milestoneSheet: null });
+      else if (s.veilOpen) set({ veilOpen: false });
+      else if (s.manualOpen) set({ manualOpen: false });
       else if (s.parkPanel !== null) set({ parkPanel: null });
       else if (s.dockCategory !== null) set({ dockCategory: null });
       else if (s.coasterDraft !== null) s.cancelCoasterDraft();
       else if (s.tool.kind !== "select") set({ tool: { kind: "select" } });
-      else if (s.selectedEntity !== null || s.selectedGuest !== null)
-        set({ selectedEntity: null, selectedGuest: null, followGuest: false });
+      else if (s.selectedEntity !== null || s.selectedGuest !== null || s.selectedZone !== null)
+        set({ selectedEntity: null, selectedGuest: null, followGuest: false, selectedZone: null });
       else set({ veilOpen: true });
     },
   })),

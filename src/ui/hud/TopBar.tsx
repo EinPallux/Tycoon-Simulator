@@ -150,6 +150,13 @@ export function TopBar() {
           </span>
         </div>
         <button
+          onClick={() => useGameStore.getState().setManualOpen(true)}
+          title="Park Manual"
+          className="skewed panel-shadow cursor-pointer bg-ink-900/90 px-3.5 py-2 text-paper-050/80 transition-colors hover:text-accent-500"
+        >
+          <span className="unskew inline-block font-bold">?</span>
+        </button>
+        <button
           onClick={() => setVeilOpen(true)}
           title="Menu (Esc)"
           className="skewed panel-shadow cursor-pointer bg-ink-900/90 px-3.5 py-2 text-paper-050/80 transition-colors hover:text-accent-500"

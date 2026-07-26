@@ -41,10 +41,12 @@ import { serializeWorld } from "./save/serialize";
 import type { SaveFile } from "./save/schema";
 import { behaviorSystem } from "./systems/behavior";
 import { needsSystem } from "./systems/needs";
+import { opportunitiesDayTick, opportunitiesSystem } from "./systems/opportunities";
 import { rideOpsSystem } from "./systems/rideOps";
 import { resetSpawnWarnings, spawningSystem } from "./systems/spawning";
 import { staffSystem } from "./systems/staff";
 import { eventsSystem, weatherSystem } from "./systems/weather";
+import { recomputeZones } from "./systems/zones";
 import { DAYS_PER_WEEK, dayOfTime } from "./world/time";
 
 export interface SimEvents {
@@ -68,6 +70,11 @@ export interface SimEvents {
   "ride-fixed": { id: number; name: string };
   "research-done": { nodeId: string; name: string };
   "park-over": { reason: string };
+  // ── Phase 4: progression & polish ──
+  "opportunity-offered": { text: string };
+  "opportunity-completed": { text: string; rewardText: string };
+  "opportunity-expired": { text: string };
+  "zone-formed": { name: string; theme: string };
 }
 
 export interface SimHandle {
@@ -103,6 +110,17 @@ export function createSimHandle(world: World): SimHandle {
       events.emit("surface-changed", { indices: patch.tileChanges.map((c) => c.idx) });
     }
     if (patch.cashDelta !== 0) events.emit("cash-changed", { cash: world.cash });
+    // Zones derive from placeables — refresh on any entity change.
+    if (added.length > 0 || removed.length > 0) {
+      const { formed } = recomputeZones(world);
+      for (const zone of formed) {
+        events.emit("zone-formed", { name: zone.name, theme: zone.theme });
+        events.emit("notify", {
+          tone: "success",
+          message: `🏰 A themed zone formed: ${zone.name}! Zone rides get +excitement.`,
+        });
+      }
+    }
   };
 
   const runDayRollover = (newDay: number): void => {
@@ -142,9 +160,12 @@ export function createSimHandle(world: World): SimHandle {
         handleMissedPayment(interest);
       }
     }
+    // Hold-style Opportunities advance on completed days.
+    opportunitiesDayTick(world);
     // Research lab.
     const finished = researchDailyTick(world);
     if (finished) {
+      world.tallies.researchCompleted++;
       events.emit("research-done", { nodeId: finished.id, name: finished.name });
       events.emit("notify", {
         tone: "success",
@@ -245,6 +266,7 @@ export function createSimHandle(world: World): SimHandle {
         rideOpsSystem(world, events);
         staffSystem(world);
         needsSystem(world);
+        opportunitiesSystem(world, events);
 
         if (world.time % RATING_CADENCE === 0) {
           const before = world.rating.value;

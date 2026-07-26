@@ -298,6 +298,8 @@ function stepBuying(world: World, events: Emitter<SimEvents>, slot: number, id: 
   }
   addExpense(world, "goods", stallCfg.cogs);
   stallState.salesToday++;
+  world.tallies.stallSales++;
+  if (stallCfg.satisfies === "bladder") world.tallies.toiletUses++;
   events.emit("sale", {
     source: "stalls",
     cents: price,
@@ -362,6 +364,8 @@ function stepDeparting(
   const outX = world.entrance.x + 0.5 + jitterOf(id, 0);
   const outZ = world.entrance.z + 4.2;
   if (!moveToward(world, slot, outX, outZ)) return;
+  world.tallies.guestsLeft++;
+  if ((g.mood[slot] as number) >= 70) world.tallies.happyLeavers++;
   removeGuest(g, id);
   events.emit("guests-changed", { count: g.count, lifetime: world.lifetimeGuests });
 }

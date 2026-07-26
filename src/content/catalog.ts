@@ -121,6 +121,11 @@ export const PLACEABLE_DEFS: readonly PlaceableDef[] = [
     coasterFamily: "flume",
   },
 
+  // ── Opportunity trophies (unlock by earning them — never for sale) ─────
+  scenery("golden-statue", "Golden Guest", "furniture/sculpture", 0, 9),
+  scenery("wonder-fountain", "Wonder Ring", "nature/monument-ring", 0, 9, [2, 2]),
+  scenery("penny-statue", "Penny Plinth", "furniture/column", 0, 8),
+
   // ── Stalls (CoasterKit models; items per GAME_DESIGN §15.6) ────────────
   stall("food", "Snack Shack", "stalls/food", 40_000, {
     satisfies: "hunger", item: "Burger", price: 400, cogs: 140,

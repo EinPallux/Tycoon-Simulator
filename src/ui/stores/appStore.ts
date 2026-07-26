@@ -50,9 +50,15 @@ export const DEFAULT_SETTINGS: Settings = {
 interface AppStore {
   profile: Profile | null;
   settings: Settings;
+  /** Penny topics dismissed forever ("Got it, don't repeat"). */
+  pennyDismissed: string[];
+  /** First-time explainer topics already shown once. */
+  pennySeen: string[];
   setProfile: (profile: Profile) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   resetSettings: () => void;
+  dismissPennyTopic: (topic: string) => void;
+  markPennySeen: (topic: string) => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -60,9 +66,17 @@ export const useAppStore = create<AppStore>()(
     (set) => ({
       profile: null,
       settings: DEFAULT_SETTINGS,
+      pennyDismissed: [],
+      pennySeen: [],
       setProfile: (profile) => set({ profile }),
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
       resetSettings: () => set({ settings: DEFAULT_SETTINGS }),
+      dismissPennyTopic: (topic) =>
+        set((s) =>
+          s.pennyDismissed.includes(topic) ? s : { pennyDismissed: [...s.pennyDismissed, topic] },
+        ),
+      markPennySeen: (topic) =>
+        set((s) => (s.pennySeen.includes(topic) ? s : { pennySeen: [...s.pennySeen, topic] })),
     }),
     { name: "wanderpark.app" },
   ),

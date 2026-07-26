@@ -9,6 +9,10 @@
 import { useEffect, useState } from "react";
 import { FUNDING_LEVELS, RESEARCH_BRANCHES, type ResearchBranchId } from "@/content/research";
 import {
+  opportunityProgress01,
+  opportunityProgressLabel,
+} from "@/sim/systems/opportunities";
+import {
   CAMPAIGNS,
   CREDIT_LIMIT_RATE,
   LOAN_RATE_STEP,
@@ -28,6 +32,7 @@ import { Slider } from "@/ui/kit/Slider";
 import { useGameStore, type ParkPanelTab } from "@/ui/stores/gameStore";
 
 const TABS: { id: ParkPanelTab; label: string }[] = [
+  { id: "goals", label: "Goals" },
   { id: "finances", label: "Finances" },
   { id: "research", label: "Research" },
   { id: "guests", label: "Guests" },
@@ -72,11 +77,142 @@ export function ParkPanel() {
           </div>
         }
       >
+        {parkPanel === "goals" && <GoalsTab />}
         {parkPanel === "finances" && <FinancesTab />}
         {parkPanel === "research" && <ResearchTab />}
         {parkPanel === "guests" && <GuestsTab />}
         {parkPanel === "rating" && <RatingTab />}
       </Panel>
+    </div>
+  );
+}
+
+const CATEGORY_ICONS: Record<string, string> = {
+  growth: "📈",
+  builder: "🏗",
+  economy: "💰",
+  operations: "🔧",
+  visitors: "🎟",
+  care: "💚",
+};
+
+function rewardLabel(reward: { kind: string; amount: number }): string {
+  switch (reward.kind) {
+    case "cash":
+      return formatMoney(reward.amount);
+    case "research":
+      return "research surge";
+    case "scenery":
+      return "exclusive scenery piece";
+    case "campaign":
+      return "free ad campaign";
+    default:
+      return "a surprise";
+  }
+}
+
+function GoalsTab() {
+  const sim = useGameStore.getState().sim;
+  if (!sim) return null;
+  const world = sim.world;
+  const opp = world.opportunities;
+
+  return (
+    <div className="flex flex-col gap-3 text-sm">
+      <p className="text-xs text-ink-600">
+        Opportunities are optional nudges rolled from your park&apos;s state. Decline freely —
+        nothing bad ever happens. Milestones tick along on their own up top.
+      </p>
+
+      {opp.offered && (
+        <div className="border-2 border-accent-500 bg-accent-500/10 p-3">
+          <div className="flex items-start gap-2">
+            <span className="text-lg" aria-hidden>
+              {CATEGORY_ICONS[opp.offered.category] ?? "💡"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-ink-600">
+                New opportunity
+              </div>
+              <div className="font-bold">{opp.offered.text}</div>
+              <div className="mt-0.5 text-xs text-ink-600">
+                Reward: <b>{rewardLabel(opp.offered.reward)}</b>
+                {opp.offered.deadlineAt > 0 && " · has a deadline once accepted"}
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" onClick={() => sim.dispatch({ type: "accept-opportunity" })}>
+              Accept
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="!border-ink-900/40 !text-ink-900 hover:!border-accent-600 hover:!text-accent-600"
+              onClick={() => sim.dispatch({ type: "reroll-opportunity" })}
+            >
+              Reroll
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="!text-ink-900"
+              onClick={() => sim.dispatch({ type: "decline-opportunity" })}
+            >
+              No thanks
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <SectionTitle>Active ({opp.active.length}/2)</SectionTitle>
+      {opp.active.length === 0 ? (
+        <p className="text-xs text-ink-600">
+          Nothing accepted right now.{" "}
+          {opp.offered ? "There's an offer waiting above!" : "A new offer drifts in every few days."}
+        </p>
+      ) : (
+        opp.active.map((goal) => {
+          const progress = opportunityProgress01(world, goal);
+          const label = opportunityProgressLabel(world, goal);
+          const daysLeft =
+            goal.deadlineAt > 0
+              ? Math.max(0, Math.ceil((goal.deadlineAt - world.time) / TICKS_PER_DAY))
+              : null;
+          return (
+            <div key={goal.id} className="bg-paper-100 p-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-xs font-bold">
+                  {CATEGORY_ICONS[goal.category] ?? "💡"} {goal.text}
+                </span>
+                {daysLeft !== null && (
+                  <span className={`shrink-0 text-[10px] font-bold ${daysLeft <= 1 ? "text-danger-500" : "text-ink-600"}`}>
+                    {daysLeft}d left
+                  </span>
+                )}
+              </div>
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink-900/10">
+                  <div
+                    className="h-full bg-accent-500 transition-all duration-300"
+                    style={{ width: `${Math.round(progress * 100)}%` }}
+                  />
+                </div>
+                <span className="tabular text-[10px] font-bold text-ink-600">{label}</span>
+              </div>
+              <div className="mt-1 text-[10px] text-ink-600">
+                Reward: {rewardLabel(goal.reward)}
+              </div>
+            </div>
+          );
+        })
+      )}
+
+      {opp.completed > 0 && (
+        <p className="text-[11px] text-ink-600">
+          🎯 {opp.completed} opportunit{opp.completed === 1 ? "y" : "ies"} completed in this park.
+        </p>
+      )}
     </div>
   );
 }

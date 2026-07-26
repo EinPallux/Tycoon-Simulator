@@ -30,6 +30,7 @@ import {
 import { pieceTiles } from "./coaster/pieces";
 import { GUEST_STATE } from "./entities/guests";
 import { hasPerk, isCoasterUnlocked, isDefUnlocked } from "./research";
+import { rollOffer } from "./systems/opportunities";
 import { canPlaceEntity, canPlaceSurface, footprintTiles } from "./validate";
 import {
   SURFACE_NONE,
@@ -66,7 +67,12 @@ export type Command =
   | { type: "repay-loan" }
   | { type: "start-campaign"; kind: CampaignKind }
   | { type: "call-repair"; id: number }
-  | { type: "renovate-ride"; id: number };
+  | { type: "renovate-ride"; id: number }
+  | { type: "accept-opportunity" }
+  | { type: "decline-opportunity" }
+  | { type: "reroll-opportunity" }
+  | { type: "rename-zone"; key: string; name: string }
+  | { type: "dismiss-guided" };
 
 export interface TileChange {
   idx: number;
@@ -276,6 +282,7 @@ export function executeCommand(world: World, cmd: Command): DispatchResult {
       world.debt += LOAN_TRANCHE;
       world.loans.tranches++;
       world.cash += LOAN_TRANCHE;
+      world.tallies.loansTaken++;
       return { ok: true, patch: null };
     }
     case "repay-loan": {
@@ -285,6 +292,7 @@ export function executeCommand(world: World, cmd: Command): DispatchResult {
       world.cash -= amount;
       world.debt -= amount;
       if (world.loans.tranches > 0) world.loans.tranches--;
+      world.tallies.centsRepaid += amount;
       return { ok: true, patch: null };
     }
     case "start-campaign": {
@@ -300,6 +308,7 @@ export function executeCommand(world: World, cmd: Command): DispatchResult {
         kind: cmd.kind,
         endsAt: world.time + campaign.days * TICKS_PER_DAY,
       };
+      world.tallies.campaignsRun++;
       return { ok: true, patch: null };
     }
     case "call-repair": {
@@ -330,6 +339,59 @@ export function executeCommand(world: World, cmd: Command): DispatchResult {
         ride.phase = "idle";
         ride.repairT = 0;
       }
+      return { ok: true, patch: null };
+    }
+    case "accept-opportunity": {
+      const opp = world.opportunities;
+      if (!opp.offered) return { ok: false, reason: "No offer on the table" };
+      if (opp.active.length >= 2) return { ok: false, reason: "Two goals is plenty — finish one first" };
+      opp.offered.acceptedAt = world.time;
+      // Deadline clocks start at acceptance, not at offer time.
+      if (opp.offered.deadlineAt > 0) {
+        opp.offered.deadlineAt += world.time - (opp.offerExpiresAt - Math.round(1.5 * TICKS_PER_DAY));
+      }
+      opp.active.push(opp.offered);
+      opp.offered = null;
+      return { ok: true, patch: null };
+    }
+    case "decline-opportunity": {
+      const opp = world.opportunities;
+      if (!opp.offered) return { ok: false, reason: "Nothing to decline" };
+      opp.offered = null;
+      opp.nextOfferAt = world.time + Math.round(TICKS_PER_DAY * 0.8);
+      return { ok: true, patch: null };
+    }
+    case "reroll-opportunity": {
+      const opp = world.opportunities;
+      if (!opp.offered) return { ok: false, reason: "Nothing to reroll" };
+      const previous = opp.offered.templateId;
+      opp.offered = null;
+      const rolled = rollOffer(world);
+      if (rolled && rolled.templateId === previous) {
+        // One free second draw for variety; identical twice = so be it.
+        const again = rollOffer(world);
+        opp.offered = again ?? rolled;
+      } else {
+        opp.offered = rolled;
+      }
+      if (!opp.offered) {
+        opp.nextOfferAt = world.time + Math.round(TICKS_PER_DAY * 0.8);
+        return { ok: false, reason: "The idea well is dry right now — try again later" };
+      }
+      opp.offerExpiresAt = world.time + Math.round(TICKS_PER_DAY * 1.5);
+      return { ok: true, patch: null };
+    }
+    case "rename-zone": {
+      const name = cmd.name.trim().slice(0, 32);
+      if (name.length === 0) return { ok: false, reason: "A zone needs a name" };
+      const zone = world.zones.find((z) => z.key === cmd.key);
+      if (!zone) return { ok: false, reason: "That zone dissolved" };
+      world.zoneNames[cmd.key] = name;
+      zone.name = name;
+      return { ok: true, patch: null };
+    }
+    case "dismiss-guided": {
+      world.guidedDismissed = true;
       return { ok: true, patch: null };
     }
   }
@@ -489,6 +551,7 @@ function execPlaceEntity(
     entitiesRemoved: [],
   };
   applyPatch(world, patch);
+  if (def.category === "scenery") world.tallies.sceneryPlaced++;
   return { ok: true, patch };
 }
 

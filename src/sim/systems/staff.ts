@@ -96,7 +96,10 @@ function finishJob(world: World, staff: Staff): void {
       const tile = staffTile(world, staff);
       const before = world.litter.length;
       world.litter = world.litter.filter((l) => l.idx !== tile);
-      if (world.litter.length < before) staff.jobsDone++;
+      if (world.litter.length < before) {
+        staff.jobsDone++;
+        world.tallies.litterSwept += before - world.litter.length;
+      }
       staff.jobTarget = -1;
       break;
     }
@@ -107,6 +110,7 @@ function finishJob(world: World, staff: Staff): void {
         ride.repairT = 0;
         ride.reliability = Math.min(100, ride.reliability + 70);
         staff.jobsDone++;
+        world.tallies.mechanicRepairs++;
       }
       staff.jobTarget = -1;
       break;

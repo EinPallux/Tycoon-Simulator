@@ -17,6 +17,7 @@ import { RideLayer } from "./RideLayer";
 import { LitterLayer } from "./LitterLayer";
 import { StaffLayer } from "./StaffLayer";
 import { BreakdownSmokeLayer, RainLayer } from "./FxLayer";
+import { ZoneLayer } from "./ZoneLayer";
 import { frameStats } from "./stats";
 
 export function WorldScene() {
@@ -35,6 +36,7 @@ export function WorldScene() {
       <StaffLayer />
       <EmoteLayer />
       <LitterLayer />
+      <ZoneLayer />
       <BreakdownSmokeLayer />
       <RainLayer />
       <BuildController />

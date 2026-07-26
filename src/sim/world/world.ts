@@ -151,6 +151,92 @@ export interface MarketingState {
   hangoverUntil: number;
 }
 
+/** Lifetime park counters — fuel for Opportunities, achievements & records. */
+export interface Tallies {
+  peakGuests: number;
+  happyLeavers: number;
+  guestsLeft: number;
+  stallSales: number;
+  toiletUses: number;
+  coasterRiders: number;
+  breakdowns: number;
+  /** Tick of the most recent breakdown (uptime goals). */
+  lastBreakdownAt: number;
+  mechanicRepairs: number;
+  litterSwept: number;
+  sceneryPlaced: number;
+  loansTaken: number;
+  centsRepaid: number;
+  campaignsRun: number;
+  researchCompleted: number;
+  zonesFormed: number;
+  opportunitiesDone: number;
+}
+
+export const createTallies = (): Tallies => ({
+  peakGuests: 0,
+  happyLeavers: 0,
+  guestsLeft: 0,
+  stallSales: 0,
+  toiletUses: 0,
+  coasterRiders: 0,
+  breakdowns: 0,
+  lastBreakdownAt: -100_000,
+  mechanicRepairs: 0,
+  litterSwept: 0,
+  sceneryPlaced: 0,
+  loansTaken: 0,
+  centsRepaid: 0,
+  campaignsRun: 0,
+  researchCompleted: 0,
+  zonesFormed: 0,
+  opportunitiesDone: 0,
+});
+
+/** An accepted or offered Opportunity (GAME_DESIGN.md §13). */
+export interface Opportunity {
+  id: number;
+  templateId: string;
+  category: string;
+  text: string;
+  kind: "reach" | "delta" | "hold-days";
+  target: number;
+  baseline: number;
+  /** Hold-days counter (managed at day rollover). */
+  progress: number;
+  /** Tick when it quietly expires (0 = no deadline). */
+  deadlineAt: number;
+  acceptedAt: number;
+  reward: { kind: "cash" | "research" | "scenery" | "campaign"; amount: number; itemId?: string };
+}
+
+export interface OpportunitiesState {
+  /** The current un-accepted offer, if any. */
+  offered: Opportunity | null;
+  offerExpiresAt: number;
+  /** Accepted, in progress (max 2). */
+  active: Opportunity[];
+  nextOfferAt: number;
+  idCounter: number;
+  completed: number;
+}
+
+/** A detected themed zone (derived from placeables; names persist). */
+export interface Zone {
+  /** Stable-ish identity: `${theme}:${minX},${minZ}` of the cluster bbox. */
+  key: string;
+  theme: string;
+  name: string;
+  pieces: number;
+  /** Cluster bounds (tiles, inclusive). */
+  x0: number;
+  z0: number;
+  x1: number;
+  z1: number;
+  /** Ride entity ids inside/adjacent — they get the excitement bonus. */
+  rideIds: number[];
+}
+
 export interface StallState {
   entityId: number;
   /** Item price override in cents. */
@@ -263,6 +349,18 @@ export interface World {
   loans: LoanState;
   events: EventsState;
   marketing: MarketingState;
+
+  // ── Progression & polish (Phase 4) ───────────────────────────────────
+  tallies: Tallies;
+  opportunities: OpportunitiesState;
+  /** Derived from placeables (recomputed on edit); names live in zoneNames. */
+  zones: Zone[];
+  /** Player names for zones, keyed by zone key. */
+  zoneNames: Record<string, string>;
+  /** Reward-unlocked cosmetic def ids (Opportunities). */
+  bonusUnlocks: string[];
+  /** Guided Start checklist dismissed for this park. */
+  guidedDismissed: boolean;
 }
 
 export const createResearchState = (): ResearchState => ({
@@ -341,6 +439,19 @@ export function createWorld(config: NewParkConfig): World {
     loans: { tranches: 0, missedPayments: 0, bankrupt: false },
     events: { nextAt: START_TIME_TICKS + TICKS_PER_DAY * 2, active: null },
     marketing: { active: null, hangoverUntil: 0 },
+    tallies: createTallies(),
+    opportunities: {
+      offered: null,
+      offerExpiresAt: 0,
+      active: [],
+      nextOfferAt: START_TIME_TICKS + Math.round(TICKS_PER_DAY * 1.2),
+      idCounter: 0,
+      completed: 0,
+    },
+    zones: [],
+    zoneNames: {},
+    bonusUnlocks: [],
+    guidedDismissed: false,
   };
 }
 

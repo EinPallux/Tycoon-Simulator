@@ -80,6 +80,8 @@ export function rideOpsSystem(world: World, events: Emitter<SimEvents>): void {
       if (world.rng.chance(breakdownChancePerTick(world, ride))) {
         ride.phase = "broken";
         ride.repairT = 0;
+        world.tallies.breakdowns++;
+        world.tallies.lastBreakdownAt = world.time;
         ejectRiders(world, ride, entity);
         events.emit("ride-broken", { id: entityId, name: def.name });
         events.emit("notify", {
@@ -150,6 +152,7 @@ export function rideOpsSystem(world: World, events: Emitter<SimEvents>): void {
       case "unloading": {
         ride.phaseT--;
         if (ride.phaseT <= 0) {
+          if (def.coasterFamily) world.tallies.coasterRiders += ride.riders.length;
           const clubBonus = world.events.active?.kind === "coaster-club" && def.coasterFamily ? 2 : 0;
           finishRide(
             world,
