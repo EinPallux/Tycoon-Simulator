@@ -1,11 +1,70 @@
 "use client";
 
-import { useAppStore } from "@/ui/stores/appStore";
+import { useEffect, useState } from "react";
+import {
+  KEY_ACTION_LABELS,
+  useAppStore,
+  type KeyAction,
+} from "@/ui/stores/appStore";
 import { HeroHeader } from "@/ui/kit/HeroHeader";
 import { Button } from "@/ui/kit/Button";
 import { Slider } from "@/ui/kit/Slider";
 import { Toggle } from "@/ui/kit/Toggle";
 import { toast } from "@/ui/kit/Toast";
+
+const keyLabel = (key: string): string => (key === " " ? "Space" : key.toUpperCase());
+
+function KeymapEditor() {
+  const keymap = useAppStore((s) => s.keymap);
+  const rebindKey = useAppStore((s) => s.rebindKey);
+  const resetKeymap = useAppStore((s) => s.resetKeymap);
+  const [listening, setListening] = useState<KeyAction | null>(null);
+
+  useEffect(() => {
+    if (!listening) return;
+    const onKey = (e: KeyboardEvent): void => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key !== "Escape") {
+        const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+        rebindKey(listening, key);
+        toast("success", `${KEY_ACTION_LABELS[listening]} → ${keyLabel(key)}`);
+      }
+      setListening(null);
+    };
+    window.addEventListener("keydown", onKey, { capture: true });
+    return () => window.removeEventListener("keydown", onKey, { capture: true });
+  }, [listening, rebindKey]);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {(Object.keys(KEY_ACTION_LABELS) as KeyAction[]).map((action) => (
+        <div key={action} className="flex items-center justify-between bg-paper-100 px-3 py-1.5">
+          <span className="text-xs font-semibold text-ink-900">{KEY_ACTION_LABELS[action]}</span>
+          <button
+            onClick={() => setListening(listening === action ? null : action)}
+            className={`min-w-20 cursor-pointer px-2.5 py-1 text-center text-xs font-bold uppercase ${
+              listening === action
+                ? "animate-pulse bg-accent-500 text-ink-900"
+                : "bg-ink-900 text-paper-050 hover:bg-ink-700"
+            }`}
+          >
+            {listening === action ? "Press a key…" : keyLabel(keymap[action])}
+          </button>
+        </div>
+      ))}
+      <button
+        onClick={() => {
+          resetKeymap();
+          toast("info", "Keys restored to defaults.");
+        }}
+        className="self-start text-[11px] font-bold uppercase tracking-wide text-ink-600 hover:text-ink-900"
+      >
+        Reset keys
+      </button>
+    </div>
+  );
+}
 
 export function SettingsTab() {
   const settings = useAppStore((s) => s.settings);
@@ -99,11 +158,10 @@ export function SettingsTab() {
             checked={settings.invertZoom}
             onChange={(v) => updateSettings({ invertZoom: v })}
           />
+          <KeymapEditor />
           <div className="bg-paper-100 px-4 py-3 text-xs text-ink-600">
-            <b className="text-ink-900">Keys:</b> WASD pan · Q/E rotate · Wheel zoom · Space pause ·
-            1/2/3 speed · B build · R rotate piece · P photo mode · Del bulldoze · Z / Shift+Z
-            undo/redo · Esc back · coaster drafting W/A/D/R/F/L — remapping lands with the Phase-5
-            release polish.
+            <b className="text-ink-900">Fixed keys:</b> WASD pan · Q/E rotate camera · Wheel zoom ·
+            Del bulldoze · Z / Shift+Z undo/redo · Esc back · F3 fps · coaster drafting W/A/D/R/F/L.
           </div>
         </Section>
 
