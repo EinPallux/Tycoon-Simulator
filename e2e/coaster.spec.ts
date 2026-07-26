@@ -6,33 +6,9 @@
  */
 
 import { expect, test } from "@playwright/test";
+import { type WanderparkHook } from "./hook";
 
 test.setTimeout(180_000);
-
-interface WanderparkHook {
-  sim: {
-    world: {
-      entrance: { x: number; z: number };
-      coasters: Map<number, unknown>;
-      staff: unknown[];
-      cash: number;
-      camera: { targetX: number; targetZ: number; zoom: number };
-    };
-    dispatch(cmd: unknown): { ok: boolean };
-  };
-  store: {
-    getState(): {
-      startCoasterDraft(family: string, entry: unknown): void;
-      setTool(tool: unknown): void;
-    };
-  };
-}
-
-declare global {
-  interface Window {
-    __wanderpark?: WanderparkHook;
-  }
-}
 
 test("coaster builder: draft → build → ride exists and persists", async ({ page }) => {
   // ── Boot into a freeplay park ──────────────────────────────────────────
