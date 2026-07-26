@@ -61,6 +61,12 @@ export interface PlaceableDef {
   requiresPathAdjacent?: boolean;
   ride?: RideConfig;
   stall?: StallConfig;
+  /**
+   * Marks a coaster STATION def ("mouse", "flume"). Placed only by the
+   * build-coaster command; ride config resolves from the coaster's
+   * computed stats (sim/rides.ts).
+   */
+  coasterFamily?: string;
 }
 
 export interface SurfaceDef {

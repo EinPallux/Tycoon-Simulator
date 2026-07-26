@@ -44,8 +44,10 @@ export const WALK_SPEED = 1.15; // world units (tiles) per second at full energy
 export const WALK_SPEED_TIRED = 0.7;
 
 /** Spawning (doc §15.5). */
-export const SPAWN_BASE_PER_DAY = 20;
-export const SPAWN_PER_RATING = 0.35;
+// Tuned in the Phase-5 balancing campaign: the old 20 + rating·0.35 made a
+// one-ride park break even by day 2 — the §15.6 target band is day 8–12.
+export const SPAWN_BASE_PER_DAY = 10;
+export const SPAWN_PER_RATING = 0.065;
 export const ENTRY_VALUE_CLAMP: readonly [number, number] = [0.2, 1.4];
 /** entry_value = clamp(1.6 − entry$ / (6 + 0.02·rating), …). Entry in DOLLARS here. */
 export const entryValue = (entryDollars: number, rating: number): number => {

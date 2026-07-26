@@ -12,12 +12,14 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { createSimHandle, type SimHandle } from "@/sim/api";
 import { worldFromSave } from "@/sim/save/serialize";
 import { dayOfTime, formatClock, TICKS_PER_SEC } from "@/sim/world/time";
-import { loadSave, storeSave } from "@/ui/saves";
+import { loadSaveWithRecovery, storeSave } from "@/ui/saves";
 import { useGameStore } from "@/ui/stores/gameStore";
 import { useAppStore } from "@/ui/stores/appStore";
 import { toast, ToastRail } from "@/ui/kit/Toast";
+import { CrashGuard, WebGLWatchdog } from "@/ui/CrashGuard";
 import { applyVolumes, setWallaLevel, sfx, unlockAudio } from "@/audio/bus";
-import { formatMoney } from "@/ui/format";
+import { setMusicMood, type MusicMood } from "@/audio/music";
+import { timeOfDay01 } from "@/sim/world/time";
 import { WorldScene } from "./WorldScene";
 import { renderClock } from "./stats";
 import { Hud } from "@/ui/hud/Hud";
@@ -37,14 +39,20 @@ export default function GameRoot() {
       setLoadError("No park selected.");
       return;
     }
-    void loadSave(saveId)
-      .then((save) => {
+    void loadSaveWithRecovery(saveId)
+      .then((result) => {
         if (cancelled) return;
-        if (!save) {
-          setLoadError("That park doesn't exist (anymore).");
+        if (!result) {
+          setLoadError("That park doesn't exist (anymore) — and no backup could be read.");
           return;
         }
-        const handle = createSimHandle(worldFromSave(save));
+        if (result.recoveredFrom !== null) {
+          toast(
+            "warning",
+            `💾 The latest save was unreadable — recovered the autosave from ${result.recoveredFrom} save${result.recoveredFrom > 1 ? "s" : ""} ago.`,
+          );
+        }
+        const handle = createSimHandle(worldFromSave(result.save));
         useGameStore.getState().attach(handle, saveId);
         wireSimEvents(handle);
         setSim(handle);
@@ -56,7 +64,7 @@ export default function GameRoot() {
       })
       .catch((err: unknown) => {
         console.error(err);
-        if (!cancelled) setLoadError("This save could not be loaded.");
+        if (!cancelled) setLoadError("This save could not be loaded (all backups included).");
       });
     return () => {
       cancelled = true;
@@ -79,6 +87,7 @@ export default function GameRoot() {
     return () => {
       window.removeEventListener("pointerdown", unlock);
       unsub();
+      setMusicMood(null); // leaving the park stops the soundtrack
     };
   }, []);
 
@@ -98,12 +107,14 @@ export default function GameRoot() {
   }
 
   return (
+    <CrashGuard>
     <div className="relative h-dvh w-full overflow-hidden bg-ink-900">
       {sim && (
         <Canvas
           shadows
           dpr={[1, 2]}
           camera={{ fov: 45, near: 0.5, far: 600 }}
+          gl={{ preserveDrawingBuffer: true }}
           onCreated={() => setSceneReady(true)}
           className="!absolute inset-0"
         >
@@ -124,8 +135,10 @@ export default function GameRoot() {
         </div>
       )}
       {sim && <Hud />}
+      {sim && sceneReady && <WebGLWatchdog />}
       <ToastRail />
     </div>
+    </CrashGuard>
   );
 }
 
@@ -162,12 +175,31 @@ function wireSimEvents(sim: SimHandle): void {
   sim.events.on("rating-changed", ({ value }) =>
     useGameStore.getState().setHud({ ratingValue: value }),
   );
-  sim.events.on("milestone", ({ name, award }) => {
-    toast("success", `🏆 Milestone: ${name}! Award: ${formatMoney(award)}`);
+  sim.events.on("milestone", ({ tier, name, award }) => {
+    useGameStore.getState().setMilestoneSheet({ tier, name, award });
     sfx.fanfare();
   });
   sim.events.on("notify", ({ tone, message }) => toast(tone, message));
+  // ── Coasters & chaos ──
+  sim.events.on("weather-changed", ({ kind }) => useGameStore.getState().setHud({ weather: kind }));
+  sim.events.on("research-done", () => {
+    // Unlock badges (dock, coaster trays) re-derive from the world.
+    useGameStore.getState().bumpWorld();
+    sfx.fanfare();
+  });
+  sim.events.on("ride-fixed", () => sfx.thunk());
+  sim.events.on("park-over", ({ reason }) => {
+    useGameStore.getState().setParkOver(reason);
+    useGameStore.getState().setSpeed(0);
+  });
 }
+
+/** Short HUD chip labels for active dynamic events. */
+const EVENT_LABELS: Record<string, string> = {
+  vip: "🎩 VIP visiting",
+  influencer: "🤳 Streamer on site",
+  "coaster-club": "🎢 Coaster Club visit",
+};
 
 // ── Fixed-timestep driver (10 Hz logic × speed) ──────────────────────────
 
@@ -201,7 +233,15 @@ function useSimLoop(sim: SimHandle | null): void {
       const clock = formatClock(sim.world.time);
       if (clock !== lastClock) {
         lastClock = clock;
-        useGameStore.getState().setHud({ clock });
+        // Once per sim-minute: clock + slow ambient mirrors (event chip).
+        const active = sim.world.events.active;
+        const eventLabel = active ? (EVENT_LABELS[active.kind] ?? null) : null;
+        useGameStore.getState().setHud({ clock, eventLabel });
+        // Soundtrack mood: storm > night > day (audio v2).
+        const t01 = timeOfDay01(sim.world.time);
+        const mood: MusicMood =
+          sim.world.weather.current === "storm" ? "storm" : t01 > 0.27 && t01 < 0.76 ? "day" : "night";
+        setMusicMood(mood);
       }
     };
     raf = requestAnimationFrame(frame);
@@ -218,39 +258,45 @@ function useKeyboard(sim: SimHandle | null, saveId: string | null): void {
       const store = useGameStore.getState();
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      // Remappable actions first (GAME_DESIGN.md §18 — keymap in Settings).
+      const keymap = useAppStore.getState().keymap;
+      const pressed = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (pressed === keymap.pause) {
+        e.preventDefault();
+        store.togglePause();
+        return;
+      }
+      if (pressed === keymap.speed1) return store.setSpeed(1);
+      if (pressed === keymap.speed2) return store.setSpeed(2);
+      if (pressed === keymap.speed3) return store.setSpeed(3);
+      if (pressed === keymap.build) {
+        store.setDockCategory(store.dockCategory === null ? "paths" : null);
+        return;
+      }
+      if (pressed === keymap.bulldoze) {
+        store.setTool({ kind: "bulldoze" });
+        return;
+      }
+      if (pressed === keymap.rotate) {
+        const tool = store.tool;
+        if (tool.kind === "place") store.setTool({ ...tool, rot: (tool.rot + 1) % 4 });
+        if (tool.kind === "move") store.setTool({ ...tool, rot: (tool.rot + 1) % 4 });
+        if (tool.kind === "coaster" && store.coasterDraft === null)
+          store.setTool({ ...tool, rot: (tool.rot + 1) % 4 });
+        return;
+      }
+      if (pressed === keymap.photo) {
+        store.setPhotoMode(!store.photoMode);
+        return;
+      }
+      // Fixed keys.
       switch (e.key) {
-        case " ":
-          e.preventDefault();
-          store.togglePause();
-          break;
-        case "1":
-          store.setSpeed(1);
-          break;
-        case "2":
-          store.setSpeed(2);
-          break;
-        case "3":
-          store.setSpeed(3);
-          break;
         case "Escape":
           store.escape();
           break;
-        case "b":
-        case "B":
-          store.setDockCategory(store.dockCategory === null ? "paths" : null);
-          break;
         case "Delete":
-        case "x":
-        case "X":
           store.setTool({ kind: "bulldoze" });
           break;
-        case "r":
-        case "R": {
-          const tool = store.tool;
-          if (tool.kind === "place") store.setTool({ ...tool, rot: (tool.rot + 1) % 4 });
-          if (tool.kind === "move") store.setTool({ ...tool, rot: (tool.rot + 1) % 4 });
-          break;
-        }
         case "z":
           if (e.shiftKey) sim.redo();
           else sim.undo();

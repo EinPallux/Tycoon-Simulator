@@ -24,6 +24,7 @@ import {
 import { VALUE_EMA_ALPHA } from "../balance/economy";
 import { addExpense, addIncome } from "../economy";
 import { EMOTE, GUEST_STATE, pushThought, removeGuest, setEmote } from "../entities/guests";
+import { rideConfigOf } from "../rides";
 import { adjacentPathTiles, findPath, isStrollable, queueChainFor } from "../world/pathfind";
 import { rotatedFootprint } from "../validate";
 import { timeOfDay01 } from "../world/time";
@@ -41,7 +42,10 @@ const jitterOf = (id: number, axis: 0 | 1): number => {
 
 export function behaviorSystem(world: World, events: Emitter<SimEvents>): void {
   const g = world.guests;
-  const leaveTime = timeOfDay01(world.time) > LEAVE_HOUR || timeOfDay01(world.time) < 0.3;
+  const leaveTime =
+    timeOfDay01(world.time) > LEAVE_HOUR ||
+    timeOfDay01(world.time) < 0.3 ||
+    world.weather.current === "storm";
 
   // Iterate backwards: removals swap from the end.
   for (let i = g.count - 1; i >= 0; i--) {
@@ -226,8 +230,8 @@ function stepTraveling(
   const def = getPlaceableDef(entity.defId);
   if (def.category === "ride") {
     const ride = world.rides.get(entity.id);
-    const rideCfg = def.ride;
-    if (!ride || !rideCfg || !ride.open) {
+    const rideCfg = rideConfigOf(world, entity.id);
+    if (!ride || !rideCfg || !ride.open || ride.phase === "broken") {
       cold.target = 0;
       g.state[slot] = GUEST_STATE.strolling;
       return;
@@ -294,6 +298,8 @@ function stepBuying(world: World, events: Emitter<SimEvents>, slot: number, id: 
   }
   addExpense(world, "goods", stallCfg.cogs);
   stallState.salesToday++;
+  world.tallies.stallSales++;
+  if (stallCfg.satisfies === "bladder") world.tallies.toiletUses++;
   events.emit("sale", {
     source: "stalls",
     cents: price,
@@ -358,6 +364,8 @@ function stepDeparting(
   const outX = world.entrance.x + 0.5 + jitterOf(id, 0);
   const outZ = world.entrance.z + 4.2;
   if (!moveToward(world, slot, outX, outZ)) return;
+  world.tallies.guestsLeft++;
+  if ((g.mood[slot] as number) >= 70) world.tallies.happyLeavers++;
   removeGuest(g, id);
   events.emit("guests-changed", { count: g.count, lifetime: world.lifetimeGuests });
 }
@@ -402,27 +410,28 @@ function chooseGoal(world: World, slot: number, id: number): Goal | null {
   if (!cold) return null;
 
   // Priority: urgent needs first, then fun.
-  const wants: ((def: PlaceableDef) => boolean)[] = [];
+  const tolerance = 3 + cold.thrill * 6;
+  const wants: ((def: PlaceableDef, entityId: number) => boolean)[] = [];
   if ((g.bladder[slot] as number) > 100 - NEED_LOW)
     wants.push((d) => d.stall?.satisfies === "bladder");
   if ((g.hunger[slot] as number) < NEED_LOW) wants.push((d) => d.stall?.satisfies === "hunger");
   if ((g.thirst[slot] as number) < NEED_LOW) wants.push((d) => d.stall?.satisfies === "thirst");
   if ((g.energy[slot] as number) < NEED_LOW) wants.push((d) => d.id === "scenery/bench");
-  // Fun: a ride within this guest's intensity comfort.
-  const tolerance = 3 + cold.thrill * 6;
-  wants.push((d) => {
-    if (d.category !== "ride" || !d.ride) return false;
-    return d.ride.intensity <= tolerance + 1.5;
+  // Fun: any ride (incl. coasters) within this guest's intensity comfort.
+  wants.push((d, entityId) => {
+    if (d.category !== "ride") return false;
+    const cfg = rideConfigOf(world, entityId);
+    return cfg !== null && cfg.intensity <= tolerance + 1.5;
   });
 
   for (const want of wants) {
     const candidates: { entityId: number; goals: Set<number> }[] = [];
     for (const entity of world.placeables.values()) {
       const def = getPlaceableDef(entity.defId);
-      if (!want(def)) continue;
+      if (!want(def, entity.id)) continue;
       if (def.category === "ride") {
         const ride = world.rides.get(entity.id);
-        if (!ride || !ride.open) continue;
+        if (!ride || !ride.open || ride.phase === "broken") continue;
         if (cold.money < ride.price) continue;
       }
       if (def.stall) {
@@ -430,9 +439,10 @@ function chooseGoal(world: World, slot: number, id: number): Goal | null {
         if (stallState && stallState.price > cold.money) continue;
       }
       const [w, d] = rotatedFootprint(def, entity.rot);
-      const { chain, joinPath } = def.ride
-        ? queueChainFor(world, entity.x, entity.z, w, d)
-        : { chain: [], joinPath: null };
+      const { chain, joinPath } =
+        def.category === "ride"
+          ? queueChainFor(world, entity.x, entity.z, w, d)
+          : { chain: [], joinPath: null };
       const goals =
         chain.length > 0 && joinPath !== null
           ? new Set([joinPath])

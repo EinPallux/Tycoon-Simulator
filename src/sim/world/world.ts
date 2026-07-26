@@ -8,6 +8,9 @@ import { createIdSource, type IdSource } from "@/shared/ids";
 import { createRng, restoreRng, type Rng } from "@/shared/rng";
 import { createGuestsPool, type GuestsPool } from "../entities/guests";
 import { DEFAULT_ENTRY_PRICE, type ExpenseSource, type IncomeSource } from "../balance/economy";
+import type { CampaignKind, StaffRole, WeatherKind } from "../balance/phase3";
+import type { Coaster } from "../coaster/coaster";
+import type { ResearchBranchId } from "@/content/research";
 import { createTileMap, setOwnedRect, type TileMap } from "./tiles";
 import { TICKS_PER_DAY } from "./time";
 
@@ -27,12 +30,33 @@ export const MAP_PRESETS: Record<MapSize, { owned: number }> = {
 
 export const DIFFICULTY_PRESETS: Record<
   Difficulty,
-  { startCash: number; startDebt: number; interestApr: number }
+  {
+    startCash: number;
+    startDebt: number;
+    interestApr: number;
+    /** Breakdown chance multiplier (§15.7: relaxed −50%, tycoon +40%). */
+    breakdownMult: number;
+    /** Queue patience multiplier (relaxed guests wait 15% longer). */
+    patienceMult: number;
+    /** Entry-price elasticity: >1 punishes pricey gates harder. */
+    elasticityMult: number;
+    /** Dynamic-event cadence multiplier (<1 = more frequent). */
+    eventGapMult: number;
+  }
 > = {
   // cents; GAME_DESIGN.md §15.6–15.7
-  relaxed: { startCash: 3_500_000, startDebt: 0, interestApr: 0.04 },
-  classic: { startCash: 2_500_000, startDebt: 1_000_000, interestApr: 0.08 },
-  tycoon: { startCash: 1_750_000, startDebt: 1_500_000, interestApr: 0.11 },
+  relaxed: {
+    startCash: 3_500_000, startDebt: 0, interestApr: 0.04,
+    breakdownMult: 0.5, patienceMult: 1.15, elasticityMult: 0.9, eventGapMult: 1.25,
+  },
+  classic: {
+    startCash: 2_500_000, startDebt: 1_000_000, interestApr: 0.08,
+    breakdownMult: 1, patienceMult: 1, elasticityMult: 1, eventGapMult: 1,
+  },
+  tycoon: {
+    startCash: 1_750_000, startDebt: 1_500_000, interestApr: 0.11,
+    breakdownMult: 1.4, patienceMult: 1, elasticityMult: 1.15, eventGapMult: 0.8,
+  },
 };
 
 export interface PlacedEntity {
@@ -62,13 +86,13 @@ export interface CameraState {
   zoom: number;
 }
 
-/** Per-placed-ride runtime state. */
+/** Per-placed-ride runtime state (flat rides AND coaster stations). */
 export interface RideState {
   entityId: number;
   open: boolean;
   /** Ticket price in cents (starts at def default). */
   price: number;
-  phase: "idle" | "loading" | "running" | "unloading";
+  phase: "idle" | "loading" | "running" | "unloading" | "broken";
   /** Ticks remaining in the current phase. */
   phaseT: number;
   /** Guest ids on board. */
@@ -78,6 +102,160 @@ export interface RideState {
   lifetimeRiders: number;
   /** Income today in cents (resets at day rollover). */
   incomeToday: number;
+  /** 0–100; low reliability breeds breakdowns (Phase 3). */
+  reliability: number;
+  /** Ticks of repair remaining while broken and being fixed (−1 = waiting). */
+  repairT: number;
+}
+
+export interface Staff {
+  id: number;
+  role: StaffRole;
+  name: string;
+  x: number;
+  z: number;
+  px: number;
+  pz: number;
+  heading: number;
+  /** Path being followed (tile indices) + step. */
+  path: number[];
+  pathStep: number;
+  /** Current job target: litter tile idx / ride entity id / queue tile (−1 none). */
+  jobTarget: number;
+  /** Ticks of current job work remaining (0 = walking/idle). */
+  workT: number;
+  hiredDay: number;
+  /** Career sweeps/repairs/cheers (skill grows with tenure). */
+  jobsDone: number;
+}
+
+export interface WeatherState {
+  current: WeatherKind;
+  /** What the forecast says comes next. */
+  next: WeatherKind;
+  /** Tick when `next` takes over. */
+  changeAt: number;
+}
+
+export interface ResearchState {
+  /** Nodes completed per branch (0..6). */
+  done: Record<ResearchBranchId, number>;
+  active: ResearchBranchId | null;
+  /** Funding level index into FUNDING_LEVELS. */
+  funding: number;
+  /** Research-days accumulated toward the next node. */
+  progressDays: number;
+  /** Perk flags earned. */
+  perks: string[];
+}
+
+export interface LoanState {
+  /** Extra tranches beyond the starting debt. */
+  tranches: number;
+  missedPayments: number;
+  /** Set when the bank has fully foreclosed — the park-over state. */
+  bankrupt: boolean;
+}
+
+export interface ActiveEvent {
+  kind: string;
+  endsAt: number;
+}
+
+export interface EventsState {
+  nextAt: number;
+  active: ActiveEvent | null;
+}
+
+export interface MarketingState {
+  active: { kind: CampaignKind; endsAt: number } | null;
+  hangoverUntil: number;
+}
+
+/** Lifetime park counters — fuel for Opportunities, achievements & records. */
+export interface Tallies {
+  peakGuests: number;
+  happyLeavers: number;
+  guestsLeft: number;
+  stallSales: number;
+  toiletUses: number;
+  coasterRiders: number;
+  breakdowns: number;
+  /** Tick of the most recent breakdown (uptime goals). */
+  lastBreakdownAt: number;
+  mechanicRepairs: number;
+  litterSwept: number;
+  sceneryPlaced: number;
+  loansTaken: number;
+  centsRepaid: number;
+  campaignsRun: number;
+  researchCompleted: number;
+  zonesFormed: number;
+  opportunitiesDone: number;
+}
+
+export const createTallies = (): Tallies => ({
+  peakGuests: 0,
+  happyLeavers: 0,
+  guestsLeft: 0,
+  stallSales: 0,
+  toiletUses: 0,
+  coasterRiders: 0,
+  breakdowns: 0,
+  lastBreakdownAt: -100_000,
+  mechanicRepairs: 0,
+  litterSwept: 0,
+  sceneryPlaced: 0,
+  loansTaken: 0,
+  centsRepaid: 0,
+  campaignsRun: 0,
+  researchCompleted: 0,
+  zonesFormed: 0,
+  opportunitiesDone: 0,
+});
+
+/** An accepted or offered Opportunity (GAME_DESIGN.md §13). */
+export interface Opportunity {
+  id: number;
+  templateId: string;
+  category: string;
+  text: string;
+  kind: "reach" | "delta" | "hold-days";
+  target: number;
+  baseline: number;
+  /** Hold-days counter (managed at day rollover). */
+  progress: number;
+  /** Tick when it quietly expires (0 = no deadline). */
+  deadlineAt: number;
+  acceptedAt: number;
+  reward: { kind: "cash" | "research" | "scenery" | "campaign"; amount: number; itemId?: string };
+}
+
+export interface OpportunitiesState {
+  /** The current un-accepted offer, if any. */
+  offered: Opportunity | null;
+  offerExpiresAt: number;
+  /** Accepted, in progress (max 2). */
+  active: Opportunity[];
+  nextOfferAt: number;
+  idCounter: number;
+  completed: number;
+}
+
+/** A detected themed zone (derived from placeables; names persist). */
+export interface Zone {
+  /** Stable-ish identity: `${theme}:${minX},${minZ}` of the cluster bbox. */
+  key: string;
+  theme: string;
+  name: string;
+  pieces: number;
+  /** Cluster bounds (tiles, inclusive). */
+  x0: number;
+  z0: number;
+  x1: number;
+  z1: number;
+  /** Ride entity ids inside/adjacent — they get the excitement bonus. */
+  rideIds: number[];
 }
 
 export interface StallState {
@@ -128,7 +306,16 @@ export interface RatingState {
 export const emptyDayLedger = (day: number): DayLedger => ({
   day,
   income: { entry: 0, rides: 0, stalls: 0, refunds: 0 },
-  expense: { construction: 0, upkeep: 0, goods: 0 },
+  expense: {
+    construction: 0,
+    upkeep: 0,
+    goods: 0,
+    wages: 0,
+    interest: 0,
+    repairs: 0,
+    research: 0,
+    marketing: 0,
+  },
 });
 
 export const createEconomy = (): EconomyState => ({
@@ -172,7 +359,38 @@ export interface World {
   milestoneTier: number;
   /** Fractional spawn accumulator. */
   spawnAcc: number;
+
+  // ── Coasters & chaos (Phase 3) ───────────────────────────────────────
+  /** Keyed by station entity id. */
+  coasters: Map<number, Coaster>;
+  staff: Staff[];
+  staffIds: IdSource;
+  weather: WeatherState;
+  research: ResearchState;
+  loans: LoanState;
+  events: EventsState;
+  marketing: MarketingState;
+
+  // ── Progression & polish (Phase 4) ───────────────────────────────────
+  tallies: Tallies;
+  opportunities: OpportunitiesState;
+  /** Derived from placeables (recomputed on edit); names live in zoneNames. */
+  zones: Zone[];
+  /** Player names for zones, keyed by zone key. */
+  zoneNames: Record<string, string>;
+  /** Reward-unlocked cosmetic def ids (Opportunities). */
+  bonusUnlocks: string[];
+  /** Guided Start checklist dismissed for this park. */
+  guidedDismissed: boolean;
 }
+
+export const createResearchState = (): ResearchState => ({
+  done: { thrill: 0, family: 0, food: 0, ops: 0 },
+  active: null,
+  funding: 1,
+  progressDays: 0,
+  perks: [],
+});
 
 export interface NewParkConfig {
   name: string;
@@ -229,11 +447,33 @@ export function createWorld(config: NewParkConfig): World {
     litter: [],
     rating: {
       value: 0,
-      terms: { happiness: 0.7, rides: 0, cleanliness: 1, scenery: 0, value: 0.7 },
-      valueEma: 0.7,
+      // Neutral priors — reputation is earned, not granted (Phase-5 tuning).
+      terms: { happiness: 0.45, rides: 0, cleanliness: 1, scenery: 0, value: 0.55 },
+      valueEma: 0.55,
     },
     milestoneTier: -1,
     spawnAcc: 0,
+    coasters: new Map(),
+    staff: [],
+    staffIds: createIdSource(),
+    weather: { current: "sun", next: "sun", changeAt: START_TIME_TICKS + TICKS_PER_DAY / 2 },
+    research: createResearchState(),
+    loans: { tranches: 0, missedPayments: 0, bankrupt: false },
+    events: { nextAt: START_TIME_TICKS + TICKS_PER_DAY * 2, active: null },
+    marketing: { active: null, hangoverUntil: 0 },
+    tallies: createTallies(),
+    opportunities: {
+      offered: null,
+      offerExpiresAt: 0,
+      active: [],
+      nextOfferAt: START_TIME_TICKS + Math.round(TICKS_PER_DAY * 1.2),
+      idCounter: 0,
+      completed: 0,
+    },
+    zones: [],
+    zoneNames: {},
+    bonusUnlocks: [],
+    guidedDismissed: false,
   };
 }
 

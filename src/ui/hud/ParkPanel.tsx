@@ -7,15 +7,34 @@
  */
 
 import { useEffect, useState } from "react";
+import { FUNDING_LEVELS, RESEARCH_BRANCHES, type ResearchBranchId } from "@/content/research";
+import {
+  opportunityProgress01,
+  opportunityProgressLabel,
+} from "@/sim/systems/opportunities";
+import {
+  CAMPAIGNS,
+  CREDIT_LIMIT_RATE,
+  LOAN_RATE_STEP,
+  LOAN_TRANCHE,
+  type CampaignKind,
+} from "@/sim/balance/phase3";
+import { computeParkValue } from "@/sim/commands";
 import { ledgerDayTotals } from "@/sim/economy";
 import { MILESTONES, RATING_WEIGHTS, ratingHints } from "@/sim/rating";
+import { activeNode, hasPerk } from "@/sim/research";
+import { DIFFICULTY_PRESETS } from "@/sim/world/world";
+import { TICKS_PER_DAY } from "@/sim/world/time";
 import { formatMoney } from "@/ui/format";
+import { Button } from "@/ui/kit/Button";
 import { Panel } from "@/ui/kit/Panel";
 import { Slider } from "@/ui/kit/Slider";
 import { useGameStore, type ParkPanelTab } from "@/ui/stores/gameStore";
 
 const TABS: { id: ParkPanelTab; label: string }[] = [
+  { id: "goals", label: "Goals" },
   { id: "finances", label: "Finances" },
+  { id: "research", label: "Research" },
   { id: "guests", label: "Guests" },
   { id: "rating", label: "Rating" },
 ];
@@ -38,7 +57,7 @@ export function ParkPanel() {
   return (
     <div className="pointer-events-auto absolute right-4 top-20 w-96 max-w-[calc(100vw-2rem)]">
       <Panel
-        title="Park Management"
+        title="Park"
         onClose={() => setParkPanel(null)}
         headerExtra={
           <div className="flex gap-1">
@@ -58,10 +77,142 @@ export function ParkPanel() {
           </div>
         }
       >
+        {parkPanel === "goals" && <GoalsTab />}
         {parkPanel === "finances" && <FinancesTab />}
+        {parkPanel === "research" && <ResearchTab />}
         {parkPanel === "guests" && <GuestsTab />}
         {parkPanel === "rating" && <RatingTab />}
       </Panel>
+    </div>
+  );
+}
+
+const CATEGORY_ICONS: Record<string, string> = {
+  growth: "📈",
+  builder: "🏗",
+  economy: "💰",
+  operations: "🔧",
+  visitors: "🎟",
+  care: "💚",
+};
+
+function rewardLabel(reward: { kind: string; amount: number }): string {
+  switch (reward.kind) {
+    case "cash":
+      return formatMoney(reward.amount);
+    case "research":
+      return "research surge";
+    case "scenery":
+      return "exclusive scenery piece";
+    case "campaign":
+      return "free ad campaign";
+    default:
+      return "a surprise";
+  }
+}
+
+function GoalsTab() {
+  const sim = useGameStore.getState().sim;
+  if (!sim) return null;
+  const world = sim.world;
+  const opp = world.opportunities;
+
+  return (
+    <div className="flex flex-col gap-3 text-sm">
+      <p className="text-xs text-ink-600">
+        Opportunities are optional nudges rolled from your park&apos;s state. Decline freely —
+        nothing bad ever happens. Milestones tick along on their own up top.
+      </p>
+
+      {opp.offered && (
+        <div className="border-2 border-accent-500 bg-accent-500/10 p-3">
+          <div className="flex items-start gap-2">
+            <span className="text-lg" aria-hidden>
+              {CATEGORY_ICONS[opp.offered.category] ?? "💡"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-ink-600">
+                New opportunity
+              </div>
+              <div className="font-bold">{opp.offered.text}</div>
+              <div className="mt-0.5 text-xs text-ink-600">
+                Reward: <b>{rewardLabel(opp.offered.reward)}</b>
+                {opp.offered.deadlineAt > 0 && " · has a deadline once accepted"}
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" onClick={() => sim.dispatch({ type: "accept-opportunity" })}>
+              Accept
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="!border-ink-900/40 !text-ink-900 hover:!border-accent-600 hover:!text-accent-600"
+              onClick={() => sim.dispatch({ type: "reroll-opportunity" })}
+            >
+              Reroll
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="!text-ink-900"
+              onClick={() => sim.dispatch({ type: "decline-opportunity" })}
+            >
+              No thanks
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <SectionTitle>Active ({opp.active.length}/2)</SectionTitle>
+      {opp.active.length === 0 ? (
+        <p className="text-xs text-ink-600">
+          Nothing accepted right now.{" "}
+          {opp.offered ? "There's an offer waiting above!" : "A new offer drifts in every few days."}
+        </p>
+      ) : (
+        opp.active.map((goal) => {
+          const progress = opportunityProgress01(world, goal);
+          const label = opportunityProgressLabel(world, goal);
+          const daysLeft =
+            goal.deadlineAt > 0
+              ? Math.max(0, Math.ceil((goal.deadlineAt - world.time) / TICKS_PER_DAY))
+              : null;
+          return (
+            <div key={goal.id} className="bg-paper-100 p-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-xs font-bold">
+                  {CATEGORY_ICONS[goal.category] ?? "💡"} {goal.text}
+                </span>
+                {daysLeft !== null && (
+                  <span className={`shrink-0 text-[10px] font-bold ${daysLeft <= 1 ? "text-danger-500" : "text-ink-600"}`}>
+                    {daysLeft}d left
+                  </span>
+                )}
+              </div>
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink-900/10">
+                  <div
+                    className="h-full bg-accent-500 transition-all duration-300"
+                    style={{ width: `${Math.round(progress * 100)}%` }}
+                  />
+                </div>
+                <span className="tabular text-[10px] font-bold text-ink-600">{label}</span>
+              </div>
+              <div className="mt-1 text-[10px] text-ink-600">
+                Reward: {rewardLabel(goal.reward)}
+              </div>
+            </div>
+          );
+        })
+      )}
+
+      {opp.completed > 0 && (
+        <p className="text-[11px] text-ink-600">
+          🎯 {opp.completed} opportunit{opp.completed === 1 ? "y" : "ies"} completed in this park.
+        </p>
+      )}
     </div>
   );
 }
@@ -102,11 +253,240 @@ function FinancesTab() {
         {yesterday && <LedgerRow label="Net yesterday" value={ledgerDayTotals(yesterday).net} />}
       </div>
 
+      <SectionTitle>Today so far — the chaos column</SectionTitle>
+      <LedgerRow label="🧹 Wages" value={-world.economy.today.expense.wages} />
+      <LedgerRow label="🏦 Interest" value={-world.economy.today.expense.interest} />
+      <LedgerRow label="🔩 Repairs & fines" value={-world.economy.today.expense.repairs} />
+      <LedgerRow label="🔬 Research" value={-world.economy.today.expense.research} />
+      <LedgerRow label="📣 Marketing" value={-world.economy.today.expense.marketing} />
+
+      <LoansSection />
+      <MarketingSection />
+
       <SectionTitle>The books</SectionTitle>
       <LedgerRow label="Cash" value={world.cash} bold />
-      <LedgerRow label="Debt (interest arrives Phase 3)" value={-world.debt} />
+      <LedgerRow label="Debt" value={-world.debt} />
       <LedgerRow label="Lifetime income" value={world.economy.lifetimeIncome} />
       <LedgerRow label="Lifetime spend" value={-world.economy.lifetimeExpense} />
+    </div>
+  );
+}
+
+function LoansSection() {
+  const sim = useGameStore.getState().sim;
+  if (!sim) return null;
+  const world = sim.world;
+  const apr =
+    DIFFICULTY_PRESETS[world.meta.difficulty].interestApr + world.loans.tranches * LOAN_RATE_STEP;
+  const limit = Math.round(computeParkValue(world) * CREDIT_LIMIT_RATE) + 1_000_000;
+
+  return (
+    <>
+      <SectionTitle>The bank</SectionTitle>
+      <LedgerRow label="Outstanding debt" value={-world.debt} bold />
+      <div className="flex justify-between text-xs text-ink-600">
+        <span>Interest rate</span>
+        <span className="tabular">{(apr * 100).toFixed(1)}% APR, charged daily</span>
+      </div>
+      <div className="flex justify-between text-xs text-ink-600">
+        <span>Credit limit (park value based)</span>
+        <span className="tabular">{formatMoney(limit)}</span>
+      </div>
+      {world.loans.missedPayments > 0 && (
+        <p className="bg-danger-500/15 px-2 py-1.5 text-xs font-bold text-danger-600">
+          ⚠ {world.loans.missedPayments} missed payment{world.loans.missedPayments > 1 ? "s" : ""} —
+          at 3 the bank starts seizing rides!
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          onClick={() => sim.dispatch({ type: "take-loan" })}
+          disabled={world.debt + LOAN_TRANCHE > limit}
+        >
+          Borrow {formatMoney(LOAN_TRANCHE)}
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="!border-ink-900/40 !text-ink-900 hover:!border-accent-600 hover:!text-accent-600"
+          onClick={() => sim.dispatch({ type: "repay-loan" })}
+          disabled={world.debt <= 0 || world.cash < Math.min(LOAN_TRANCHE, world.debt)}
+        >
+          Repay {formatMoney(Math.min(LOAN_TRANCHE, Math.max(1, world.debt)))}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function MarketingSection() {
+  const sim = useGameStore.getState().sim;
+  if (!sim) return null;
+  const world = sim.world;
+  const licensed = hasPerk(world, "marketing");
+  const active = world.marketing.active;
+  const hungover = world.time < world.marketing.hangoverUntil;
+
+  return (
+    <>
+      <SectionTitle>Marketing</SectionTitle>
+      {!licensed ? (
+        <p className="text-xs text-ink-600">
+          🔒 Research the <b>Marketing Licence</b> (Operations branch) to run ad campaigns.
+        </p>
+      ) : active ? (
+        <p className="bg-paper-100 px-2 py-1.5 text-xs">
+          {CAMPAIGNS[active.kind].icon} <b>{CAMPAIGNS[active.kind].name}</b> is live —{" "}
+          {Math.max(1, Math.ceil((active.endsAt - world.time) / TICKS_PER_DAY))} day(s) left,
+          arrivals ×{CAMPAIGNS[active.kind].mult}.
+        </p>
+      ) : (
+        <>
+          {hungover && (
+            <p className="text-xs text-ink-600">
+              😮‍💨 Post-campaign hangover — arrivals slightly down for a bit. The crowd remembers
+              the hype.
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-1.5">
+            {(Object.keys(CAMPAIGNS) as CampaignKind[]).map((kind) => {
+              const c = CAMPAIGNS[kind];
+              return (
+                <button
+                  key={kind}
+                  disabled={world.cash < c.cost}
+                  onClick={() => sim.dispatch({ type: "start-campaign", kind })}
+                  className="flex cursor-pointer flex-col items-start gap-0.5 bg-paper-100 px-2.5 py-1.5 text-left transition-colors hover:bg-paper-200 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <span className="text-xs font-bold">
+                    {c.icon} {c.name}
+                  </span>
+                  <span className="text-[10px] text-ink-600">
+                    {formatMoney(c.cost)} · {c.days}d · arrivals ×{c.mult}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function ResearchTab() {
+  const sim = useGameStore.getState().sim;
+  if (!sim) return null;
+  const world = sim.world;
+  const research = world.research;
+  const node = activeNode(world);
+  const funding = FUNDING_LEVELS[research.funding] ?? FUNDING_LEVELS[1];
+  const progress = node ? Math.min(1, research.progressDays / node.days) : 0;
+
+  return (
+    <div className="flex flex-col gap-3 text-sm">
+      {world.meta.freeplayUnlocks ? (
+        <p className="bg-paper-100 px-3 py-2 text-xs">
+          🔓 This park runs <b>freeplay unlocks</b> — everything is available from day one.
+          Research still earns the perk nodes below.
+        </p>
+      ) : (
+        <p className="text-xs text-ink-600">
+          Pick a branch, set the funding, and your boffins deliver — new rides, stalls and
+          park-wide perks.
+        </p>
+      )}
+
+      <SectionTitle>Funding</SectionTitle>
+      <div className="flex gap-1.5">
+        {FUNDING_LEVELS.map((level, i) => (
+          <button
+            key={level.label}
+            onClick={() => sim.dispatch({ type: "set-research-funding", level: i })}
+            className={`flex-1 cursor-pointer px-2 py-1.5 text-center text-xs font-bold uppercase transition-colors ${
+              research.funding === i
+                ? "bg-accent-500 text-ink-900"
+                : "bg-paper-100 text-ink-600 hover:bg-paper-200"
+            }`}
+          >
+            {level.label}
+            <span className="block text-[9px] font-semibold normal-case opacity-70">
+              {level.perDay === 0 ? "$0/day" : `${formatMoney(level.perDay)}/day`}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {node && research.active && funding && funding.speed > 0 && (
+        <div className="bg-paper-100 px-3 py-2">
+          <div className="flex justify-between text-xs">
+            <b>Researching: {node.name}</b>
+            <span className="tabular text-ink-600">
+              ~{Math.max(1, Math.ceil((node.days - research.progressDays) / funding.speed))}d left
+            </span>
+          </div>
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-ink-900/10">
+            <div className="h-full bg-accent-500" style={{ width: `${Math.round(progress * 100)}%` }} />
+          </div>
+        </div>
+      )}
+
+      <SectionTitle>Branches</SectionTitle>
+      {RESEARCH_BRANCHES.map((branch) => {
+        const done = research.done[branch.id as ResearchBranchId];
+        const isActive = research.active === branch.id;
+        const next = branch.nodes[done];
+        return (
+          <button
+            key={branch.id}
+            onClick={() => sim.dispatch({ type: "set-research", branch: branch.id })}
+            disabled={done >= branch.nodes.length}
+            className={`flex cursor-pointer flex-col gap-1 px-3 py-2 text-left transition-colors ${
+              isActive ? "bg-ink-900 text-paper-050" : "bg-paper-100 hover:bg-paper-200"
+            } disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <span className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wide">
+                {branch.icon} {branch.name}
+              </span>
+              <span className="flex gap-0.5">
+                {branch.nodes.map((n, i) => (
+                  <span
+                    key={n.id}
+                    title={`${n.name} — ${n.blurb}`}
+                    className={`inline-block h-2 w-2 rounded-full ${
+                      i < done ? "bg-good-500" : isActive && i === done ? "bg-accent-500" : isActive ? "bg-paper-050/25" : "bg-ink-900/15"
+                    }`}
+                  />
+                ))}
+              </span>
+            </span>
+            <span className={`text-[11px] ${isActive ? "text-paper-050/70" : "text-ink-600"}`}>
+              {next ? (
+                <>
+                  Next: <b>{next.name}</b> — {next.blurb}
+                </>
+              ) : (
+                "Branch complete — the boffins take a bow."
+              )}
+            </span>
+          </button>
+        );
+      })}
+
+      {research.perks.length > 0 && (
+        <>
+          <SectionTitle>Perks in effect</SectionTitle>
+          <div className="flex flex-wrap gap-1">
+            {research.perks.map((perk) => (
+              <span key={perk} className="bg-good-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-good-500">
+                {perk.replace(/-/g, " ")}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -151,7 +531,38 @@ function GuestsTab() {
           <TrendRow count={boredSouls} total={g.count} label="are bored — more rides!" />
         </ul>
       )}
+      <ThoughtsSection />
     </div>
+  );
+}
+
+/** The park's word cloud: most-repeated recent guest thoughts. */
+function ThoughtsSection() {
+  const sim = useGameStore.getState().sim;
+  if (!sim) return null;
+  const g = sim.world.guests;
+  const tally = new Map<string, number>();
+  for (let i = 0; i < g.count; i++) {
+    const cold = g.cold.get(g.ids[i] as number);
+    if (!cold) continue;
+    for (const thought of cold.thoughts) {
+      tally.set(thought, (tally.get(thought) ?? 0) + 1);
+    }
+  }
+  const top = [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (top.length === 0) return null;
+  return (
+    <>
+      <SectionTitle>Overheard in the park</SectionTitle>
+      <ul className="flex flex-col gap-1 text-xs">
+        {top.map(([thought, count]) => (
+          <li key={thought} className="flex items-start justify-between gap-2 bg-paper-100 px-2 py-1">
+            <span className="italic">“{thought}”</span>
+            {count > 1 && <b className="tabular shrink-0 text-ink-600">×{count}</b>}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

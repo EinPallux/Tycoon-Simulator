@@ -16,10 +16,12 @@ import {
   SPAWN_PER_RATING,
 } from "../balance/guests";
 import { addGuest } from "../entities/guests";
+import { hasPerk } from "../research";
 import { isStrollable } from "../world/pathfind";
 import { dayOfTime, TICKS_PER_DAY, timeOfDay01 } from "../world/time";
-import type { World } from "../world/world";
+import { DIFFICULTY_PRESETS, type World } from "../world/world";
 import type { SimEvents } from "../api";
+import { spawnModifiers } from "./weather";
 
 /** Is there a path connected to the entrance's inner edge? */
 export function parkIsOpen(world: World): boolean {
@@ -36,9 +38,16 @@ export function spawningSystem(world: World, events: Emitter<SimEvents>): void {
   const curve = dayCurve(t01);
   if (curve <= 0) return;
 
-  const entryDollars = world.economy.entryPrice / 100;
+  // §15.7: tycoon elasticity punishes pricey gates harder, relaxed forgives.
+  const elasticity = DIFFICULTY_PRESETS[world.meta.difficulty].elasticityMult;
+  const entryDollars = (world.economy.entryPrice / 100) * elasticity;
   const value = entryValue(entryDollars, world.rating.value);
-  const perDay = (SPAWN_BASE_PER_DAY + world.rating.value * SPAWN_PER_RATING) * value;
+  const mouth = hasPerk(world, "word-of-mouth") ? 1.1 : 1;
+  const perDay =
+    (SPAWN_BASE_PER_DAY + world.rating.value * SPAWN_PER_RATING) *
+    value *
+    spawnModifiers(world) *
+    mouth;
   world.spawnAcc += (perDay * curve * 2.2) / TICKS_PER_DAY;
 
   if (world.spawnAcc < 1) return;
@@ -81,4 +90,5 @@ export function spawningSystem(world: World, events: Emitter<SimEvents>): void {
     world.guests.hunger[slot] = 42 + rng.range(0, 16);
     world.guests.thirst[slot] = 42 + rng.range(0, 16);
   }
+  world.tallies.peakGuests = Math.max(world.tallies.peakGuests, world.guests.count);
 }

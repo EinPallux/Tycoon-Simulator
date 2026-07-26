@@ -40,7 +40,9 @@ export function findPath(
   if (goals.has(start)) return [start];
 
   const walkable = strollOnly ? isStrollable : isWalkable;
-  if (!walkable(world, startX, startZ)) return null;
+  // NOTE: the START tile is deliberately exempt from the walkability check —
+  // riders exit onto queue tiles and demolition can strand guests on grass;
+  // you can always step OFF wherever you're standing (neighbors still gate).
 
   // Pick any goal as the heuristic anchor (multi-goal: nearest-ish).
   let anchorX = 0;

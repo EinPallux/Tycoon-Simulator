@@ -46,6 +46,13 @@ export function NewParkTab() {
   const [freeplay, setFreeplay] = useState(false);
   const [building, setBuilding] = useState(false);
 
+  // Guided Start defaults ON for the first-ever park (GAME_DESIGN.md §12).
+  useEffect(() => {
+    void listSaves().then((saves) => {
+      if (saves.length === 0) setGuidedStart(true);
+    });
+  }, []);
+
   // Guided Start defaults ON for the very first park (GAME_DESIGN.md §12).
   useEffect(() => {
     void listSaves().then((saves) => {

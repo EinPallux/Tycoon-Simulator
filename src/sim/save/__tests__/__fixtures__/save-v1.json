@@ -1,0 +1,39 @@
+{
+  "formatVersion": 1,
+  "appVersion": "0.1.0",
+  "seed": 42,
+  "rngState": 42,
+  "time": 1234,
+  "cash": 100000,
+  "debt": 0,
+  "meta": {
+    "name": "Old Park",
+    "difficulty": "classic",
+    "mapSize": "S",
+    "guidedStart": false,
+    "freeplayUnlocks": false
+  },
+  "world": {
+    "size": 8,
+    "ownedRect": {
+      "x0": 1,
+      "z0": 1,
+      "w": 4,
+      "d": 4
+    },
+    "entrance": {
+      "x": 3,
+      "z": 4
+    },
+    "surface": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+    "owned": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+  },
+  "placeables": [],
+  "placeableIdCounter": 0,
+  "camera": {
+    "targetX": 3,
+    "targetZ": 3,
+    "yaw": 0,
+    "zoom": 0.5
+  }
+}

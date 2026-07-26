@@ -43,6 +43,20 @@
   --ease-snap: cubic-bezier(0.2, 0.9, 0.25, 1);
 }
 
+/* ── Accessibility overrides (GAME_DESIGN.md §18) ────────────────────── */
+
+/* Colorblind-safe status palette: blue = good, orange = danger. */
+html[data-colorblind="true"] {
+  --color-good-500: #3a86ff;
+  --color-danger-500: #ff7b00;
+  --color-danger-600: #d96900;
+}
+
+/* Dyslexia-friendlier body font. */
+html[data-dyslexia="true"] {
+  --font-body: var(--font-atkinson), system-ui, sans-serif;
+}
+
 /* ── Base ────────────────────────────────────────────────────────────── */
 
 html,

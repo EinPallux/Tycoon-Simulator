@@ -165,7 +165,7 @@ describe("the living park", () => {
   });
 });
 
-describe("v1 → v2 migration", () => {
+describe("v1 → v4 migration chain", () => {
   it("upgrades a Phase-1 save with sensible defaults", () => {
     // A minimal but complete v1 save (Phase-1 shape, no guests/economy).
     const size = 8;
@@ -197,14 +197,24 @@ describe("v1 → v2 migration", () => {
       camera: { targetX: 3, targetZ: 3, yaw: 0, zoom: 0.5 },
     };
     const migrated = migrateSave(v1);
-    expect(migrated.formatVersion).toBe(2);
+    expect(migrated.formatVersion).toBe(4);
     expect(migrated.guests).toEqual([]);
     expect(migrated.economy.entryPrice).toBe(1_500);
     expect(migrated.milestoneTier).toBe(-1);
+    expect(migrated.coasters).toEqual([]);
+    expect(migrated.staff).toEqual([]);
+    expect(migrated.research.done.thrill).toBe(0);
+    expect(migrated.economy.today.expense.wages).toBe(0);
+    // v4 defaults: fresh tallies, empty goals, guided skipped for old parks.
+    expect(migrated.tallies.stallSales).toBe(0);
+    expect(migrated.opportunities.active).toEqual([]);
+    expect(migrated.guidedDismissed).toBe(true);
     // And it loads into a working world.
     const world = worldFromSave(v1);
     expect(world.cash).toBe(100_000);
     expect(world.guests.count).toBe(0);
+    expect(world.weather.current).toBe("sun");
+    expect(world.zones).toEqual([]);
   });
 });
 

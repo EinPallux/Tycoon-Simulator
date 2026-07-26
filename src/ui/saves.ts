@@ -24,6 +24,36 @@ export interface SaveSlotMeta {
 
 const INDEX_KEY = "wanderpark.saves.index";
 const slotKey = (id: string): string => `wanderpark.save.${id}`;
+const backupKey = (id: string, n: number): string => `wanderpark.save.${id}.auto${n}`;
+/** Rolling autosaves kept per park (TECHNICAL_ARCHITECTURE.md §9). */
+export const BACKUP_DEPTH = 3;
+
+/** FNV-1a over the serialized payload — cheap corruption tripwire. */
+function checksumOf(save: SaveFile): number {
+  const text = JSON.stringify(save);
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+interface StoredEnvelope {
+  save: SaveFile;
+  checksum: number;
+}
+
+const isEnvelope = (raw: unknown): raw is StoredEnvelope =>
+  typeof raw === "object" && raw !== null && "save" in raw && "checksum" in raw;
+
+/** Unwrap + verify a stored record (legacy bare saves pass through). */
+function openEnvelope(raw: unknown): { save: unknown; intact: boolean } {
+  if (isEnvelope(raw)) {
+    return { save: raw.save, intact: checksumOf(raw.save) === raw.checksum };
+  }
+  return { save: raw, intact: true }; // pre-1.0 record without a checksum
+}
 
 export async function listSaves(): Promise<SaveSlotMeta[]> {
   const index = (await get<SaveSlotMeta[]>(INDEX_KEY)) ?? [];
@@ -33,11 +63,48 @@ export async function listSaves(): Promise<SaveSlotMeta[]> {
 export async function loadSave(id: string): Promise<SaveFile | undefined> {
   const raw = await get<unknown>(slotKey(id));
   if (raw === undefined) return undefined;
-  return migrateSave(raw);
+  const { save, intact } = openEnvelope(raw);
+  if (!intact) throw new SaveFormatError("Save data failed its checksum (corrupted?)");
+  return migrateSave(save);
+}
+
+/**
+ * Recovery ladder: latest slot → auto1 → auto2 → auto3. Returns the first
+ * record that verifies AND migrates, tagged with where it came from
+ * (null = the main slot was fine; N = recovered from N saves ago).
+ */
+export async function loadSaveWithRecovery(
+  id: string,
+): Promise<{ save: SaveFile; recoveredFrom: number | null } | undefined> {
+  const candidates: Array<{ key: string; from: number | null }> = [{ key: slotKey(id), from: null }];
+  for (let n = 1; n <= BACKUP_DEPTH; n++) candidates.push({ key: backupKey(id, n), from: n });
+  for (const candidate of candidates) {
+    const raw = await get<unknown>(candidate.key);
+    if (raw === undefined) continue;
+    try {
+      const { save, intact } = openEnvelope(raw);
+      if (!intact) continue;
+      return { save: migrateSave(save), recoveredFrom: candidate.from };
+    } catch {
+      continue; // corrupted or unmigratable — try the next rung
+    }
+  }
+  return undefined;
 }
 
 export async function storeSave(id: string, save: SaveFile, day: number): Promise<void> {
-  await set(slotKey(id), save);
+  // Write-then-swap, emulated for IndexedDB: rotate the previous good copy
+  // into the autosave ladder BEFORE overwriting the main slot — the newest
+  // record is never the only copy.
+  const previous = await get<unknown>(slotKey(id));
+  if (previous !== undefined) {
+    for (let n = BACKUP_DEPTH - 1; n >= 1; n--) {
+      const older = await get<unknown>(backupKey(id, n));
+      if (older !== undefined) await set(backupKey(id, n + 1), older);
+    }
+    await set(backupKey(id, 1), previous);
+  }
+  await set(slotKey(id), { save, checksum: checksumOf(save) } satisfies StoredEnvelope);
   const index = (await get<SaveSlotMeta[]>(INDEX_KEY)) ?? [];
   const meta: SaveSlotMeta = {
     id,
@@ -54,6 +121,7 @@ export async function storeSave(id: string, save: SaveFile, day: number): Promis
 
 export async function deleteSave(id: string): Promise<void> {
   await del(slotKey(id));
+  for (let n = 1; n <= BACKUP_DEPTH; n++) await del(backupKey(id, n));
   const index = (await get<SaveSlotMeta[]>(INDEX_KEY)) ?? [];
   await set(
     INDEX_KEY,
@@ -65,13 +133,7 @@ export async function renameSave(id: string, name: string): Promise<void> {
   const save = await loadSave(id);
   if (!save) return;
   save.meta.name = name;
-  const index = (await get<SaveSlotMeta[]>(INDEX_KEY)) ?? [];
-  const meta = index.find((m) => m.id === id);
-  await set(slotKey(id), save);
-  if (meta) {
-    meta.name = name;
-    await set(INDEX_KEY, index);
-  }
+  await storeSave(id, save, dayOfTime(save.time)); // re-indexes with the new name
 }
 
 export function newSaveId(): string {

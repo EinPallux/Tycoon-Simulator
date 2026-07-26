@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 
-export const CURRENT_FORMAT_VERSION = 2;
+export const CURRENT_FORMAT_VERSION = 4;
 
 export const placedEntitySchema = z.object({
   id: z.number().int().positive(),
@@ -32,7 +32,48 @@ const ledgerSchema = z.object({
     construction: z.number().int(),
     upkeep: z.number().int(),
     goods: z.number().int(),
+    wages: z.number().int(),
+    interest: z.number().int(),
+    repairs: z.number().int(),
+    research: z.number().int(),
+    marketing: z.number().int(),
   }),
+});
+
+const trackNodeSchema = z.object({
+  x: z.number(),
+  z: z.number(),
+  h: z.number().int(),
+  dir: z.number().int().min(0).max(3),
+});
+
+const coasterSchema = z.object({
+  entityId: z.number().int().positive(),
+  family: z.enum(["mouse", "flume", "steel", "hanging", "monorail"]),
+  pieces: z.array(
+    z.object({
+      type: z.enum([
+        "station",
+        "straight",
+        "corner-left",
+        "corner-right",
+        "slope-up",
+        "slope-down",
+        "loop",
+      ]),
+      entry: trackNodeSchema,
+    }),
+  ),
+});
+
+const staffSchema = z.object({
+  id: z.number().int().positive(),
+  role: z.enum(["janitor", "mechanic", "entertainer"]),
+  name: z.string(),
+  x: z.number(),
+  z: z.number(),
+  hiredDay: z.number().int().positive(),
+  jobsDone: z.number().int().nonnegative(),
 });
 
 const guestSchema = z.object({
@@ -56,8 +97,46 @@ const guestSchema = z.object({
   thoughts: z.array(z.string()).max(8),
 });
 
-export const saveV2Schema = z.object({
-  formatVersion: z.literal(2),
+const talliesSchema = z.object({
+  peakGuests: z.number().int().nonnegative(),
+  happyLeavers: z.number().int().nonnegative(),
+  guestsLeft: z.number().int().nonnegative(),
+  stallSales: z.number().int().nonnegative(),
+  toiletUses: z.number().int().nonnegative(),
+  coasterRiders: z.number().int().nonnegative(),
+  breakdowns: z.number().int().nonnegative(),
+  lastBreakdownAt: z.number().int(),
+  mechanicRepairs: z.number().int().nonnegative(),
+  litterSwept: z.number().int().nonnegative(),
+  sceneryPlaced: z.number().int().nonnegative(),
+  loansTaken: z.number().int().nonnegative(),
+  centsRepaid: z.number().int().nonnegative(),
+  campaignsRun: z.number().int().nonnegative(),
+  researchCompleted: z.number().int().nonnegative(),
+  zonesFormed: z.number().int().nonnegative(),
+  opportunitiesDone: z.number().int().nonnegative(),
+});
+
+const opportunitySchema = z.object({
+  id: z.number().int().positive(),
+  templateId: z.string(),
+  category: z.string(),
+  text: z.string(),
+  kind: z.enum(["reach", "delta", "hold-days"]),
+  target: z.number(),
+  baseline: z.number(),
+  progress: z.number().nonnegative(),
+  deadlineAt: z.number().int().nonnegative(),
+  acceptedAt: z.number().int().nonnegative(),
+  reward: z.object({
+    kind: z.enum(["cash", "research", "scenery", "campaign"]),
+    amount: z.number().int().nonnegative(),
+    itemId: z.string().optional(),
+  }),
+});
+
+export const saveV4Schema = z.object({
+  formatVersion: z.literal(4),
   appVersion: z.string(),
   seed: z.number(),
   rngState: z.number(),
@@ -103,6 +182,7 @@ export const saveV2Schema = z.object({
       open: z.boolean(),
       price: z.number().int().nonnegative(),
       lifetimeRiders: z.number().int().nonnegative(),
+      reliability: z.number().min(0).max(100),
     }),
   ),
   stalls: z.array(
@@ -122,7 +202,52 @@ export const saveV2Schema = z.object({
   valueEma: z.number(),
   milestoneTier: z.number().int().min(-1),
   spawnAcc: z.number(),
+  // ── Phase 3 ──
+  coasters: z.array(coasterSchema),
+  staff: z.array(staffSchema),
+  staffIdCounter: z.number().int().nonnegative(),
+  weather: z.object({
+    current: z.enum(["sun", "cloud", "rain", "storm", "heat"]),
+    next: z.enum(["sun", "cloud", "rain", "storm", "heat"]),
+    changeAt: z.number().int().nonnegative(),
+  }),
+  research: z.object({
+    done: z.object({
+      thrill: z.number().int().min(0).max(8),
+      family: z.number().int().min(0).max(8),
+      food: z.number().int().min(0).max(8),
+      ops: z.number().int().min(0).max(8),
+    }),
+    active: z.enum(["thrill", "family", "food", "ops"]).nullable(),
+    funding: z.number().int().min(0).max(2),
+    progressDays: z.number().nonnegative(),
+    perks: z.array(z.string()),
+  }),
+  loans: z.object({
+    tranches: z.number().int().nonnegative(),
+    missedPayments: z.number().int().nonnegative(),
+    bankrupt: z.boolean(),
+  }),
+  events: z.object({ nextAt: z.number().int().nonnegative() }),
+  marketing: z.object({
+    activeKind: z.enum(["flyers", "radio", "tv", "influencer"]).nullable(),
+    activeEndsAt: z.number().int().nonnegative(),
+    hangoverUntil: z.number().int().nonnegative(),
+  }),
+  // ── Phase 4 ──
+  tallies: talliesSchema,
+  opportunities: z.object({
+    offered: opportunitySchema.nullable(),
+    offerExpiresAt: z.number().int().nonnegative(),
+    active: z.array(opportunitySchema).max(4),
+    nextOfferAt: z.number().int().nonnegative(),
+    idCounter: z.number().int().nonnegative(),
+    completed: z.number().int().nonnegative(),
+  }),
+  zoneNames: z.record(z.string(), z.string()),
+  bonusUnlocks: z.array(z.string()),
+  guidedDismissed: z.boolean(),
 });
 
-export type SaveV2 = z.infer<typeof saveV2Schema>;
-export type SaveFile = SaveV2; // latest version alias
+export type SaveV4 = z.infer<typeof saveV4Schema>;
+export type SaveFile = SaveV4; // latest version alias

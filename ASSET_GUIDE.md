@@ -64,18 +64,18 @@ Everything a theme park needs to bootstrap:
 | Game content (`GAME_DESIGN.md §11`) | Primary kits | Notes |
 |---|---|---|
 | Paths, queues, park entrance, stations, supports | CoasterKit | auto-tiling brush uses the 6 path/queue pieces |
-| Tracked rides (5 families) | CoasterKit | piece catalogs + socket metadata authored in `content/` |
+| Tracked rides (5 families) | CoasterKit | piece catalogs authored in `sim/coaster/pieces.ts`; **shipped Phase 3:** `coaster/{mouse,flume}-{track,corner,slope,loop}` (`-track` = single tile, `corner-small`, `straight-hill-complete`, `looping`), `coaster/station`, `coaster/station-gate`, `coaster/support` (`support-small`), trains `coaster/train-front` + `coaster/train-car` (mouse) and `coaster/train-log` (flume) — anchoring conventions documented in `render/CoasterLayer.tsx` |
 | Stalls & facilities | CoasterKit stalls + FoodKit + RestaurantBits + MiniMarketKit | FoodKit's 200 food props = counter displays, item icons, theming |
 | Flat rides (12) | composed: GraveyardKit (Haunted Manor), SpaceKit (Star Simulator), MinigolfKit (Mini-Golf), RacingKit/ToyCarKit (Go-Karts), WatercraftKit (Swan Boats), TrainKit (Park Railroad) + **sourced CC0 hero models** for Carousel/Ferris/Drop Tower/Teacups/Swing Ship/Bumper Cars (§7) | composition = kit parts assembled into one prefab at pipeline time |
 | Guests | BlockyCharacters (18) + CuteCharacters (12 + mobility aids) | crowd = instanced; aids included for inclusive guest gen (`GAME_DESIGN.md §14`) |
-| Staff | BlockyCharacters recolors + prop (wrench/broom from RPGToolsBits/SurvivalKit) | tint slots via pipeline |
+| Staff | BlockyCharacters — **shipped Phase 3:** `staff/janitor` (character-e), `staff/mechanic` (character-f), `staff/entertainer` (character-g), distinct silhouettes per role | held props/tint slots deferred to the Phase-4 juice pass |
 | Advisor Penny | CuteCharacters female + EmotesPack | |
-| Scenery: Nature set | NatureKit (329) + MiniForest | trees, rocks, gardens, fences |
-| Scenery: Pirate set | PirateKit + WatercraftKit | ships, palms, crates, cannons |
-| Scenery: Space set | SpaceKit + ModularSpaceKit + KayKit SpaceBase | |
-| Scenery: Castle set | CastleKit + KayKit Medieval Hexagon + Dungeon | |
-| Scenery: Spooky set | GraveyardKit + KayKit Spooktober + Skeletons | |
-| Scenery: Winter set | HolidayKit | |
+| Scenery: Nature set | NatureKit (329) + MiniForest | trees, rocks, gardens, fences — shipped Phase 1 |
+| Scenery: Pirate set | PirateKit + WatercraftKit | **shipped Phase 4:** `theme/pirate-*` — palms ×2, pennant, crates, cannon, chest, lookout tower (2×2), rocks |
+| Scenery: Space set | SpaceKit + ModularSpaceKit + KayKit SpaceBase | **shipped Phase 4:** `theme/space-*` — rocket (2×2), dish, speeder, meteor, astronaut, alien, generator |
+| Scenery: Castle set | CastleKit + KayKit Medieval Hexagon + Dungeon | **shipped Phase 4:** `theme/castle-*` — flags ×2, catapult, keep tower (2×2), steps, boulders |
+| Scenery: Spooky set | GraveyardKit + KayKit Spooktober + Skeletons | **shipped Phase 4:** `theme/spooky-*` — gravestone, cross, crypt (2×2), coffin, candles, altar, brazier, pumpkin |
+| Scenery: Winter set | HolidayKit | **shipped Phase 4:** `theme/winter-*` — snowman, candy canes ×2, present, reindeer, sled, snow pile, nutcracker, trimmed tree |
 | Plazas, lamps, urban furniture | CityKitRoads/Suburban/Commercial + FurnitureBits | lamps, hydrants, signs |
 | Petting-zoo props / mascots (backlog) | CubePets | post-1.0 candy |
 | Skyboxes (day/night cycle) | Kenney Skyboxes | shipped by the pipeline; v1 renders a procedural gradient dome instead (continuous dawn/dusk blending — `TECHNICAL_ARCHITECTURE.md §8`), panoramas reserved for future weather/mood variants |
@@ -91,10 +91,10 @@ Everything a theme park needs to bootstrap:
 | Gap | Plan |
 |---|---|
 | Carousel, Ferris Wheel, Drop Tower, Teacups, Swing Ship, Bumper Cars hero models | Source CC0 (Quaternius, Poly Pizza CC0 filter, Kenney future packs) or compose from kit parts; decision per ride at Phase 2 content authoring |
-| Steel/mouse coaster **cars** | Compose (ToyCarKit chassis + custom seat block) or source CC0 |
+| Steel/mouse coaster **cars** | ~~Compose or source~~ **Resolved (Phase 3):** CoasterKit ships them — `coaster-train.glb` / `coaster-train-front.glb` (used for Wild Mouse) + `train-log-flume.glb`; hanging/wooden variants ready for future families |
 | Water surface for Swan Boats/flume basins | Shader-based animated water tile (no model needed) |
 | Fireworks/particles | GPU sprites, generated (no asset) |
-| Audio (music + SFX) | Kenney Audio packs (CC0: UI, jingles, crowd), sourced at Phase 4; same licensing rules |
+| Audio (music + SFX) | ~~Kenney Audio packs sourced at Phase 4~~ **Resolved differently (Phase 4):** the soundtrack is a fully procedural WebAudio chip-orchestra (`src/audio/music.ts`) and all SFX remain synthesized — zero audio assets shipped, zero licenses to track, and moods react to weather/time instantly. Sourced packs remain an option if the owner ever wants "real" instruments |
 | Fonts | Big Shoulders Display, Inter, Atkinson Hyperlegible — SIL OFL via Google Fonts, self-hosted |
 
 ---

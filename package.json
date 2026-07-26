@@ -1,6 +1,6 @@
 {
   "name": "wanderpark",
-  "version": "0.2.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "Wanderpark — a 3D theme-park tycoon game for the browser",
   "scripts": {

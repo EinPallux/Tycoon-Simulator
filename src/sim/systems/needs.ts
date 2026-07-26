@@ -12,6 +12,7 @@ import {
   perTick,
 } from "../balance/guests";
 import { EMOTE, GUEST_STATE, setEmote } from "../entities/guests";
+import { WEATHER_INFO } from "../balance/phase3";
 import type { World } from "../world/world";
 
 const FUN_DECAY = perTick(DECAY_PER_HOUR.fun);
@@ -24,6 +25,9 @@ const clamp100 = (v: number): number => (v < 0 ? 0 : v > 100 ? 100 : v);
 
 export function needsSystem(world: World): void {
   const g = world.guests;
+  const thirstMult =
+    WEATHER_INFO[world.weather.current].thirstMult *
+    (world.events.active?.kind === "heat-rush" ? 1.5 : 1);
   for (let i = 0; i < g.count; i++) {
     if (g.state[i] === GUEST_STATE.riding) {
       // Rides top up fun on exit; time on board doesn't drain much.
@@ -31,7 +35,7 @@ export function needsSystem(world: World): void {
     } else {
       g.fun[i] = clamp100((g.fun[i] as number) - FUN_DECAY);
       g.hunger[i] = clamp100((g.hunger[i] as number) - HUNGER_DECAY);
-      g.thirst[i] = clamp100((g.thirst[i] as number) - THIRST_DECAY);
+      g.thirst[i] = clamp100((g.thirst[i] as number) - THIRST_DECAY * thirstMult);
       g.energy[i] = clamp100((g.energy[i] as number) - ENERGY_DECAY);
       g.bladder[i] = clamp100((g.bladder[i] as number) + BLADDER_RISE);
     }

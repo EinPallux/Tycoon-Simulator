@@ -9,6 +9,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { getPlaceableDef } from "@/content/catalog";
 import type { PlaceableDef } from "@/content/types";
+import { CONTRACTOR_REPAIR_COST, RENOVATE_COST_RATE } from "@/sim/balance/phase3";
+import { coasterCost, FAMILY_INFO, type Coaster } from "@/sim/coaster/coaster";
 import { REFUND_GRACE_TICKS, DEMOLISH_REFUND } from "@/sim/commands";
 import type { PlacedEntity, RideState, StallState } from "@/sim/world/world";
 import { formatMoney } from "@/ui/format";
@@ -36,23 +38,27 @@ export function InspectorPanel() {
     const entity = sim.world.placeables.get(selectedEntity);
     if (!entity) return null;
     const def = getPlaceableDef(entity.defId);
+    const coaster = sim.world.coasters.get(entity.id) ?? null;
+    const baseCost = coaster ? coasterCost(coaster.family, coaster.pieces) : def.cost;
     const withinGrace = sim.world.time - entity.placedAt <= REFUND_GRACE_TICKS;
     const refundRate = def.category === "scenery" && withinGrace ? 1 : DEMOLISH_REFUND;
-    return { entity, def, withinGrace, refund: Math.round(def.cost * refundRate) };
+    return { entity, def, coaster, baseCost, withinGrace, refund: Math.round(baseCost * refundRate) };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- worldVersion tracks external world edits
   }, [selectedEntity, worldVersion]);
 
   if (!info) return null;
-  const { entity, def, withinGrace, refund } = info;
+  const { entity, def, coaster, baseCost, withinGrace, refund } = info;
   const sim = useGameStore.getState().sim;
   const ride = sim?.world.rides.get(entity.id) ?? null;
   const stall = sim?.world.stalls.get(entity.id) ?? null;
 
   return (
     <div className="pointer-events-auto absolute left-4 top-20 w-80">
-      <Panel title={def.name} onClose={() => selectEntity(null)}>
+      <Panel title={coaster ? FAMILY_INFO[coaster.family].name : def.name} onClose={() => selectEntity(null)}>
         <div className="flex flex-col gap-3 text-sm">
+          {ride && coaster && <CoasterSection entity={entity} ride={ride} coaster={coaster} />}
           {ride && def.ride && <RideSection entity={entity} def={def} ride={ride} />}
+          {ride && <MaintenanceSection entity={entity} ride={ride} baseCost={baseCost} />}
           {stall && def.stall && <StallSection def={def} stall={stall} />}
           {!ride && !stall && (
             <>
@@ -67,14 +73,16 @@ export function InspectorPanel() {
           )}
 
           <div className="mt-1 flex gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="!border-ink-900/40 !text-ink-900 hover:!border-accent-600 hover:!text-accent-600"
-              onClick={() => setTool({ kind: "move", entityId: entity.id, rot: entity.rot })}
-            >
-              Move{withinGrace ? " (free)" : ` (${formatMoney(Math.round(def.cost * 0.1))})`}
-            </Button>
+            {!coaster && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="!border-ink-900/40 !text-ink-900 hover:!border-accent-600 hover:!text-accent-600"
+                onClick={() => setTool({ kind: "move", entityId: entity.id, rot: entity.rot })}
+              >
+                Move{withinGrace ? " (free)" : ` (${formatMoney(Math.round(def.cost * 0.1))})`}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="danger"
@@ -171,6 +179,152 @@ function StatDial({ label, value, color }: { label: string; value: number; color
       <div className={`tabular text-lg font-extrabold ${color}`}>{value.toFixed(1)}</div>
       <div className="text-[10px] font-bold uppercase tracking-wider text-ink-600">{label}</div>
     </div>
+  );
+}
+
+function CoasterSection({
+  entity,
+  ride,
+  coaster,
+}: {
+  entity: PlacedEntity;
+  ride: RideState;
+  coaster: Coaster;
+}) {
+  const stats = coaster.stats;
+  const family = FAMILY_INFO[coaster.family];
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <span
+          className={`skewed px-2 py-0.5 text-[11px] font-bold uppercase text-paper-050 ${
+            ride.phase === "broken" ? "bg-danger-500" : ride.open ? "bg-good-500" : "bg-danger-500"
+          }`}
+        >
+          <span className="unskew inline-block">
+            {ride.phase === "broken" ? "Broken down!" : ride.open ? `Open — ${ride.phase}` : "Closed"}
+          </span>
+        </span>
+        <Button
+          size="sm"
+          variant={ride.open ? "ghost" : "primary"}
+          className={ride.open ? "!text-ink-900" : ""}
+          onClick={() =>
+            useGameStore.getState().sim?.dispatch({
+              type: "set-ride-open",
+              id: entity.id,
+              open: !ride.open,
+            })
+          }
+        >
+          {ride.open ? "Close ride" : "Open ride"}
+        </Button>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <StatDial label="Excite" value={stats.excitement} color="text-good-500" />
+        <StatDial label="Intense" value={stats.intensity} color="text-card-orange" />
+        <StatDial label="Nausea" value={stats.nausea} color="text-card-purple" />
+      </div>
+      <Row
+        label="Track"
+        value={`${coaster.pieces.length} pieces · ${Math.round(stats.trackLength * 2)} m`}
+      />
+      <Row
+        label="Top speed"
+        value={`${Math.round(stats.maxSpeed * 2 * 3.6)} km/h · ${Math.round(stats.rideTimeSec)}s ride`}
+      />
+      {(stats.drops > 0 || stats.inversions > 0) && (
+        <Row
+          label="Thrills"
+          value={`${stats.drops} drop${stats.drops === 1 ? "" : "s"}${stats.inversions > 0 ? ` · ${stats.inversions} inversion${stats.inversions === 1 ? "" : "s"}` : ""}`}
+        />
+      )}
+      <div className="-mx-2">
+        <Slider
+          label="Ticket"
+          value={ride.price / 100}
+          min={0}
+          max={12}
+          step={0.5}
+          onChange={(v) =>
+            useGameStore.getState().sim?.dispatch({
+              type: "set-price",
+              id: entity.id,
+              price: Math.round(v * 100),
+            })
+          }
+          format={(v) => `$${v.toFixed(2).replace(/\.00$/, "")}`}
+        />
+      </div>
+      <Row label="In queue" value={`${ride.queue.length} guests`} />
+      <Row label="Riders (lifetime)" value={`${ride.lifetimeRiders}`} />
+      <Row label="Income today" value={formatMoney(ride.incomeToday)} />
+      <Row label="Upkeep" value={`${formatMoney(family.runningPerDay)}/day`} />
+      <Button
+        size="sm"
+        onClick={() => useGameStore.getState().setOnboardCoaster(entity.id)}
+      >
+        🎥 Ride it (onboard cam)
+      </Button>
+    </>
+  );
+}
+
+/** Reliability + repair/renovate controls — every ride wears out (§8). */
+function MaintenanceSection({
+  entity,
+  ride,
+  baseCost,
+}: {
+  entity: PlacedEntity;
+  ride: RideState;
+  baseCost: number;
+}) {
+  const sim = useGameStore.getState().sim;
+  const reliability = Math.round(ride.reliability);
+  const renovateCost = Math.round(baseCost * RENOVATE_COST_RATE);
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <span className="w-20 shrink-0 text-xs font-semibold text-ink-600">Reliability</span>
+        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-ink-900/10">
+          <div
+            className={`h-full ${reliability > 60 ? "bg-good-500" : reliability > 30 ? "bg-card-orange" : "bg-danger-500"}`}
+            style={{ width: `${reliability}%` }}
+          />
+        </div>
+        <span className="tabular w-8 text-right text-xs font-bold">{reliability}</span>
+      </div>
+      {ride.phase === "broken" && (
+        <div className="flex items-center justify-between gap-2 bg-danger-500/10 px-2 py-1.5">
+          <span className="text-xs text-danger-600">
+            {ride.repairT > 0
+              ? "🔧 Contractor on it…"
+              : ride.repairT === -1
+                ? "🔧 Mechanic on it…"
+                : "💥 Awaiting repair — got a mechanic?"}
+          </span>
+          {ride.repairT === 0 && (
+            <Button
+              size="sm"
+              onClick={() => sim?.dispatch({ type: "call-repair", id: entity.id })}
+            >
+              Call repair ({formatMoney(CONTRACTOR_REPAIR_COST)})
+            </Button>
+          )}
+        </div>
+      )}
+      {reliability < 70 && ride.phase !== "broken" && (
+        <Button
+          size="sm"
+          variant="secondary"
+          className="!border-ink-900/40 !text-ink-900 hover:!border-accent-600 hover:!text-accent-600"
+          onClick={() => sim?.dispatch({ type: "renovate-ride", id: entity.id })}
+        >
+          Renovate — reliability 100 ({formatMoney(renovateCost)})
+        </Button>
+      )}
+    </>
   );
 }
 

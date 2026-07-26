@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { WEATHER_INFO } from "@/sim/balance/phase3";
 import { formatMoney } from "@/ui/format";
 import { useGameStore } from "@/ui/stores/gameStore";
 import type { GameSpeed } from "@/sim/world/time";
@@ -15,6 +16,8 @@ export function TopBar() {
   const canRedo = useGameStore((s) => s.canRedo);
   const guestCount = useGameStore((s) => s.guestCount);
   const ratingValue = useGameStore((s) => s.ratingValue);
+  const weather = useGameStore((s) => s.weather);
+  const eventLabel = useGameStore((s) => s.eventLabel);
   const sim = useGameStore((s) => s.sim);
   const setSpeed = useGameStore((s) => s.setSpeed);
   const togglePause = useGameStore((s) => s.togglePause);
@@ -38,6 +41,23 @@ export function TopBar() {
     }
     prevCash.current = cash;
   }, [cash]);
+
+  // Rating shimmer on tick-up (juice pass §16).
+  const ratingRef = useRef<HTMLSpanElement>(null);
+  const prevRating = useRef(ratingValue);
+  useEffect(() => {
+    if (ratingValue > prevRating.current && ratingRef.current) {
+      ratingRef.current.animate(
+        [
+          { transform: "scale(1)", filter: "brightness(1)" },
+          { transform: "scale(1.15)", filter: "brightness(1.8)", offset: 0.35 },
+          { transform: "scale(1)", filter: "brightness(1)" },
+        ],
+        { duration: 500, easing: "ease-out" },
+      );
+    }
+    prevRating.current = ratingValue;
+  }, [ratingValue]);
 
   const speedButton = (s: GameSpeed, label: string): React.ReactNode => (
     <button
@@ -106,13 +126,36 @@ export function TopBar() {
         >
           <span className="unskew flex items-center gap-1.5 text-sm font-bold text-paper-050">
             <span aria-hidden>⭐</span>
-            <span className="tabular">{ratingValue}</span>
+            <span ref={ratingRef} className="tabular inline-block">
+              {ratingValue}
+            </span>
           </span>
         </button>
       </div>
 
-      {/* Right cluster: time + speed + menu */}
+      {/* Right cluster: event + weather + time + speed + menu */}
       <div className="flex items-center gap-2">
+        {eventLabel && (
+          <div
+            className="skewed panel-shadow flex items-center bg-accent-500 px-3.5 py-2"
+            title="Something's happening in the park!"
+          >
+            <span className="unskew max-w-52 truncate text-sm font-bold text-ink-900">
+              {eventLabel}
+            </span>
+          </div>
+        )}
+        <div
+          className="skewed panel-shadow flex items-center gap-2 bg-ink-900/90 px-3.5 py-2"
+          title={`${WEATHER_INFO[weather].name} — forecast: ${sim ? WEATHER_INFO[sim.world.weather.next].name : "…"}`}
+        >
+          <span className="unskew text-sm" aria-hidden>
+            {WEATHER_INFO[weather].icon}
+          </span>
+          <span className="unskew hidden text-xs font-bold text-paper-050/80 lg:inline">
+            {WEATHER_INFO[weather].name}
+          </span>
+        </div>
         <div className="skewed panel-shadow flex items-center gap-3 bg-ink-900/90 px-4 py-2 text-paper-050">
           <span className="unskew text-sm font-bold">Day {day}</span>
           <span className="unskew tabular text-sm text-paper-050/70">{clock}</span>
@@ -125,6 +168,13 @@ export function TopBar() {
             {speedButton(3, "3×")}
           </span>
         </div>
+        <button
+          onClick={() => useGameStore.getState().setManualOpen(true)}
+          title="Park Manual"
+          className="skewed panel-shadow cursor-pointer bg-ink-900/90 px-3.5 py-2 text-paper-050/80 transition-colors hover:text-accent-500"
+        >
+          <span className="unskew inline-block font-bold">?</span>
+        </button>
         <button
           onClick={() => setVeilOpen(true)}
           title="Menu (Esc)"
