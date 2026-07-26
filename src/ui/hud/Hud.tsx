@@ -4,9 +4,11 @@
 
 import { TopBar } from "./TopBar";
 import { BuildDock } from "./BuildDock";
+import { CoasterBuilderPanel } from "./CoasterBuilderPanel";
 import { InspectorPanel } from "./InspectorPanel";
 import { GuestInspector } from "./GuestInspector";
 import { ParkPanel } from "./ParkPanel";
+import { ParkOverSheet } from "./ParkOverSheet";
 import { ObjectiveChip } from "./ObjectiveChip";
 import { PauseVeil } from "./PauseVeil";
 import { PerfOverlay } from "./PerfOverlay";
@@ -19,10 +21,12 @@ export function Hud() {
       <ObjectiveChip />
       <InspectorPanel />
       <GuestInspector />
+      <CoasterBuilderPanel />
       <ParkPanel />
       <BuildDock />
       <HoverHint />
       <PerfOverlay />
+      <ParkOverSheet />
       <PauseVeil />
     </div>
   );

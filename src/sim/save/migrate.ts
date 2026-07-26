@@ -5,7 +5,7 @@
  * fixture test in __tests__/.
  */
 
-import { CURRENT_FORMAT_VERSION, saveV2Schema, type SaveFile } from "./schema";
+import { CURRENT_FORMAT_VERSION, saveV3Schema, type SaveFile } from "./schema";
 
 type Migration = (save: Record<string, unknown>) => Record<string, unknown>;
 
@@ -40,6 +40,61 @@ const MIGRATIONS: Record<number, Migration> = {
     milestoneTier: -1,
     spawnAcc: 0,
   }),
+  /**
+   * v2 (living park) → v3 (coasters & chaos): coasters, staff, weather,
+   * research, loans, events, marketing; ride reliability; wider ledger.
+   */
+  2: (save) => {
+    const widenLedger = (ledger: unknown): unknown => {
+      const l = ledger as { expense?: Record<string, number> };
+      return {
+        ...(ledger as Record<string, unknown>),
+        expense: {
+          construction: 0,
+          upkeep: 0,
+          goods: 0,
+          wages: 0,
+          interest: 0,
+          repairs: 0,
+          research: 0,
+          marketing: 0,
+          ...(l.expense ?? {}),
+        },
+      };
+    };
+    const economy = save.economy as {
+      today: unknown;
+      history: unknown[];
+    } & Record<string, unknown>;
+    const time = typeof save.time === "number" ? save.time : 0;
+    return {
+      ...save,
+      formatVersion: 3,
+      economy: {
+        ...economy,
+        today: widenLedger(economy.today),
+        history: economy.history.map(widenLedger),
+      },
+      rides: (save.rides as Array<Record<string, unknown>>).map((r) => ({
+        ...r,
+        reliability: 100,
+      })),
+      coasters: [],
+      staff: [],
+      staffIdCounter: 0,
+      weather: { current: "sun", next: "cloud", changeAt: time + 450 },
+      research: {
+        done: { thrill: 0, family: 0, food: 0, ops: 0 },
+        active: null,
+        funding: 1,
+        progressDays: 0,
+        perks: [],
+      },
+      loans: { tranches: 0, missedPayments: 0, bankrupt: false },
+      events: { nextAt: time + 1800 },
+      marketing: { activeKind: null, activeEndsAt: 0, hangoverUntil: 0 },
+    };
+  },
 };
 
 export class SaveFormatError extends Error {}
@@ -69,7 +124,7 @@ export function migrateSave(raw: unknown): SaveFile {
     }
     version = next;
   }
-  const parsed = saveV2Schema.safeParse(save);
+  const parsed = saveV3Schema.safeParse(save);
   if (!parsed.success) {
     throw new SaveFormatError(`Save failed validation: ${parsed.error.issues[0]?.message ?? "?"}`);
   }

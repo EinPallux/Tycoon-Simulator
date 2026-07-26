@@ -4,7 +4,15 @@ export const DEFAULT_ENTRY_PRICE = 1_500; // $15
 
 /** Ledger reporting buckets. */
 export type IncomeSource = "entry" | "rides" | "stalls" | "refunds";
-export type ExpenseSource = "construction" | "upkeep" | "goods";
+export type ExpenseSource =
+  | "construction"
+  | "upkeep"
+  | "goods"
+  | "wages"
+  | "interest"
+  | "repairs"
+  | "research"
+  | "marketing";
 
 /** Days of P&L history kept for the Finances panel. */
 export const LEDGER_HISTORY_DAYS = 14;

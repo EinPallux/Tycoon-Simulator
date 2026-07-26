@@ -18,9 +18,22 @@ import {
   Vector3,
 } from "three";
 import { timeOfDay01 } from "@/sim/world/time";
-import { clamp01, lerp } from "@/shared/mathx";
+import type { WeatherKind } from "@/sim/balance/phase3";
+import { clamp01, damp, lerp } from "@/shared/mathx";
 import { useGameStore } from "@/ui/stores/gameStore";
 import { daylight } from "./Ground";
+
+/** Weather grading: sun/ambient multipliers + how gray the sky goes. */
+const WEATHER_GRADE: Record<WeatherKind, { sun: number; ambient: number; gray: number }> = {
+  sun: { sun: 1, ambient: 1, gray: 0 },
+  cloud: { sun: 0.7, ambient: 0.88, gray: 0.3 },
+  rain: { sun: 0.42, ambient: 0.72, gray: 0.58 },
+  storm: { sun: 0.2, ambient: 0.55, gray: 0.8 },
+  heat: { sun: 1.08, ambient: 1, gray: 0 },
+};
+
+const GRAY_ZENITH = new Color("#5d6a7d");
+const GRAY_HORIZON = new Color("#8b96a6");
 
 interface SkyStop {
   t: number;
@@ -93,6 +106,8 @@ export function SkyAndLights() {
   const horizon = useMemo(() => new Color(), []);
   const sunDir = useMemo(() => new Vector3(0, 1, 0), []);
   const fog = useMemo(() => new Fog(new Color("#cfe9ff"), 90, 260), []);
+  // Smoothed weather grade so fronts roll in instead of snapping.
+  const grade = useRef({ sun: 1, ambient: 1, gray: 0 });
 
   const skyMaterial = useMemo(
     () =>
@@ -112,11 +127,25 @@ export function SkyAndLights() {
     [],
   );
 
-  useFrame(({ scene }) => {
+  useFrame(({ scene }, dt) => {
     const sim = useGameStore.getState().sim;
     if (!sim) return;
     const t = timeOfDay01(sim.world.time);
-    const { sun, ambient } = sampleSky(t, zenith, horizon);
+    let { sun, ambient } = sampleSky(t, zenith, horizon);
+
+    // Weather rolls the grade toward its target (≈2 s time constant).
+    const target = WEATHER_GRADE[sim.world.weather.current];
+    const g = grade.current;
+    const dtc = Math.min(dt, 0.05);
+    g.sun = damp(g.sun, target.sun, 1.8, dtc);
+    g.ambient = damp(g.ambient, target.ambient, 1.8, dtc);
+    g.gray = damp(g.gray, target.gray, 1.8, dtc);
+    sun *= g.sun;
+    ambient *= g.ambient;
+    if (g.gray > 0.01) {
+      zenith.lerp(GRAY_ZENITH, g.gray * 0.8);
+      horizon.lerp(GRAY_HORIZON, g.gray * 0.8);
+    }
 
     // Sun path: rise 06:00 (t=.25) → set 18:00 (t=.75).
     const dayArc = clamp01((t - 0.25) / 0.5);
@@ -127,7 +156,7 @@ export function SkyAndLights() {
     (uniforms.uZenith?.value as Color | undefined)?.copy(zenith);
     (uniforms.uHorizon?.value as Color | undefined)?.copy(horizon);
     (uniforms.uSunDir?.value as Vector3 | undefined)?.copy(sunDir);
-    if (uniforms.uSunGlow) uniforms.uSunGlow.value = sun > 0 ? 1 : 0;
+    if (uniforms.uSunGlow) uniforms.uSunGlow.value = sun > 0 ? 1 - grade.current.gray : 0;
 
     const world = sim.world;
     const cx = world.ownedRect.x0 + world.ownedRect.w / 2;

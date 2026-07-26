@@ -91,6 +91,27 @@ export const MODEL_SOURCES: Record<string, ModelSource> = {
   "guests/char-c": { kit: "Kenney_BlockyCharacters", file: "character-c.glb", scale: 0.33 },
   "guests/char-d": { kit: "Kenney_BlockyCharacters", file: "character-d.glb", scale: 0.33 },
 
+  // ── Staff (distinct silhouettes per role) ──────────────────────────────
+  "staff/janitor": { kit: "Kenney_BlockyCharacters", file: "character-e.glb", scale: 0.33 },
+  "staff/mechanic": { kit: "Kenney_BlockyCharacters", file: "character-f.glb", scale: 0.33 },
+  "staff/entertainer": { kit: "Kenney_BlockyCharacters", file: "character-g.glb", scale: 0.33 },
+
+  // ── Coaster track (CoasterKit; anchoring conventions in CoasterLayer) ──
+  "coaster/station": { kit: "Kenney_CoasterKit", file: "station.glb" },
+  "coaster/station-gate": { kit: "Kenney_CoasterKit", file: "station-gate.glb" },
+  "coaster/support": { kit: "Kenney_CoasterKit", file: "support-small.glb" },
+  "coaster/mouse-track": { kit: "Kenney_CoasterKit", file: "coaster-mouse-track.glb" },
+  "coaster/mouse-corner": { kit: "Kenney_CoasterKit", file: "coaster-mouse-corner-small.glb" },
+  "coaster/mouse-slope": { kit: "Kenney_CoasterKit", file: "coaster-mouse-straight-hill-complete.glb" },
+  "coaster/mouse-loop": { kit: "Kenney_CoasterKit", file: "coaster-mouse-looping.glb" },
+  "coaster/flume-track": { kit: "Kenney_CoasterKit", file: "coaster-flume-track.glb" },
+  "coaster/flume-corner": { kit: "Kenney_CoasterKit", file: "coaster-flume-corner-small.glb" },
+  "coaster/flume-slope": { kit: "Kenney_CoasterKit", file: "coaster-flume-straight-hill-complete.glb" },
+  "coaster/flume-loop": { kit: "Kenney_CoasterKit", file: "coaster-flume-looping.glb" },
+  "coaster/train-front": { kit: "Kenney_CoasterKit", file: "coaster-train-front.glb" },
+  "coaster/train-car": { kit: "Kenney_CoasterKit", file: "coaster-train.glb" },
+  "coaster/train-log": { kit: "Kenney_CoasterKit", file: "train-log-flume.glb" },
+
   // ── Ride prop models (procedural ride structures use these as parts) ──
   "rides/pirate-ship": { kit: "Kenney_PirateKit", file: "ship-pirate-small.glb", scale: 0.32 },
   "rides/bumper-car-a": { kit: "Kenney_ToyCarKit", file: "vehicle-speedster.glb", scale: 1.2 },

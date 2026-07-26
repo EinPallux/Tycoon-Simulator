@@ -8,11 +8,17 @@ import type { Emitter } from "@/shared/events";
 import { getPlaceableDef } from "@/content/catalog";
 import { LEAVE_HOUR, QUEUE_PATIENCE_SEC, XP } from "../balance/guests";
 import { VALUE_EMA_ALPHA } from "../balance/economy";
+import {
+  BREAKDOWN_BASE_PER_DAY,
+  RELIABILITY_DECAY_PER_CYCLE,
+} from "../balance/phase3";
 import { addIncome } from "../economy";
 import { EMOTE, GUEST_STATE, pushThought, setEmote } from "../entities/guests";
+import { hasPerk } from "../research";
+import { rideConfigOf } from "../rides";
 import { adjacentPathTiles, queueChainFor } from "../world/pathfind";
 import { rotatedFootprint } from "../validate";
-import { timeOfDay01 } from "../world/time";
+import { TICKS_PER_DAY, timeOfDay01 } from "../world/time";
 import type { RideState, World } from "../world/world";
 import type { SimEvents } from "../api";
 
@@ -20,6 +26,13 @@ const LOADING_TICKS = 30; // 3 s
 const UNLOADING_TICKS = 18; // 1.8 s
 /** Idle dispatch wait: run even part-full after this long with ≥1 rider. */
 const DISPATCH_WAIT_TICKS = 70;
+
+function breakdownChancePerTick(world: World, ride: RideState): number {
+  let mult = 1;
+  if (hasPerk(world, "predictive")) mult = 0.4;
+  else if (hasPerk(world, "preventive-care")) mult = 0.65;
+  return (BREAKDOWN_BASE_PER_DAY * (2 - ride.reliability / 100) * mult) / TICKS_PER_DAY;
+}
 
 export function rideOpsSystem(world: World, events: Emitter<SimEvents>): void {
   const t01 = timeOfDay01(world.time);
@@ -29,7 +42,7 @@ export function rideOpsSystem(world: World, events: Emitter<SimEvents>): void {
     const entity = world.placeables.get(entityId);
     if (!entity) continue;
     const def = getPlaceableDef(entity.defId);
-    const cfg = def.ride;
+    const cfg = rideConfigOf(world, entityId);
     if (!cfg) continue;
 
     positionQueue(world, ride, entity.x, entity.z, entity.rot, def.footprint);
@@ -44,8 +57,37 @@ export function rideOpsSystem(world: World, events: Emitter<SimEvents>): void {
       // Closed: send everyone away.
       flushQueue(world, ride, "It just closed. Typical.");
       if (ride.riders.length > 0 && ride.phase !== "running") ejectRiders(world, ride, entity);
-      ride.phase = "idle";
+      if (ride.phase !== "broken") ride.phase = "idle";
       continue;
+    }
+
+    // Broken: wait for a mechanic (or a paid contractor via repairT ticks).
+    if (ride.phase === "broken") {
+      flushQueue(world, ride, `${def.name} is doing interpretive dance. I'm off.`);
+      if (ride.repairT > 0) {
+        ride.repairT--;
+        if (ride.repairT === 0) {
+          ride.phase = "idle";
+          ride.reliability = Math.min(100, ride.reliability + 70);
+          events.emit("ride-fixed", { id: entityId, name: def.name });
+        }
+      }
+      continue;
+    }
+
+    // Wear + random malfunction while operating.
+    if (ride.phase === "running") {
+      if (world.rng.chance(breakdownChancePerTick(world, ride))) {
+        ride.phase = "broken";
+        ride.repairT = 0;
+        ejectRiders(world, ride, entity);
+        events.emit("ride-broken", { id: entityId, name: def.name });
+        events.emit("notify", {
+          tone: "warning",
+          message: `💥 ${def.name} broke down mid-cycle! A mechanic (or $${(250).toFixed(0)} contractor) can fix it.`,
+        });
+        continue;
+      }
     }
 
     switch (ride.phase) {
@@ -108,7 +150,18 @@ export function rideOpsSystem(world: World, events: Emitter<SimEvents>): void {
       case "unloading": {
         ride.phaseT--;
         if (ride.phaseT <= 0) {
-          finishRide(world, ride, entity.x, entity.z, entity.rot, def.footprint, def.name, cfg.excitement);
+          const clubBonus = world.events.active?.kind === "coaster-club" && def.coasterFamily ? 2 : 0;
+          finishRide(
+            world,
+            ride,
+            entity.x,
+            entity.z,
+            entity.rot,
+            def.footprint,
+            def.name,
+            cfg.excitement + clubBonus,
+          );
+          ride.reliability = Math.max(0, ride.reliability - RELIABILITY_DECAY_PER_CYCLE);
           ride.phase = "idle";
         }
         break;

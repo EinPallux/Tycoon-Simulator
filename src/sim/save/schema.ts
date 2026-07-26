@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 
-export const CURRENT_FORMAT_VERSION = 2;
+export const CURRENT_FORMAT_VERSION = 3;
 
 export const placedEntitySchema = z.object({
   id: z.number().int().positive(),
@@ -32,7 +32,48 @@ const ledgerSchema = z.object({
     construction: z.number().int(),
     upkeep: z.number().int(),
     goods: z.number().int(),
+    wages: z.number().int(),
+    interest: z.number().int(),
+    repairs: z.number().int(),
+    research: z.number().int(),
+    marketing: z.number().int(),
   }),
+});
+
+const trackNodeSchema = z.object({
+  x: z.number(),
+  z: z.number(),
+  h: z.number().int(),
+  dir: z.number().int().min(0).max(3),
+});
+
+const coasterSchema = z.object({
+  entityId: z.number().int().positive(),
+  family: z.enum(["mouse", "flume"]),
+  pieces: z.array(
+    z.object({
+      type: z.enum([
+        "station",
+        "straight",
+        "corner-left",
+        "corner-right",
+        "slope-up",
+        "slope-down",
+        "loop",
+      ]),
+      entry: trackNodeSchema,
+    }),
+  ),
+});
+
+const staffSchema = z.object({
+  id: z.number().int().positive(),
+  role: z.enum(["janitor", "mechanic", "entertainer"]),
+  name: z.string(),
+  x: z.number(),
+  z: z.number(),
+  hiredDay: z.number().int().positive(),
+  jobsDone: z.number().int().nonnegative(),
 });
 
 const guestSchema = z.object({
@@ -56,8 +97,8 @@ const guestSchema = z.object({
   thoughts: z.array(z.string()).max(8),
 });
 
-export const saveV2Schema = z.object({
-  formatVersion: z.literal(2),
+export const saveV3Schema = z.object({
+  formatVersion: z.literal(3),
   appVersion: z.string(),
   seed: z.number(),
   rngState: z.number(),
@@ -103,6 +144,7 @@ export const saveV2Schema = z.object({
       open: z.boolean(),
       price: z.number().int().nonnegative(),
       lifetimeRiders: z.number().int().nonnegative(),
+      reliability: z.number().min(0).max(100),
     }),
   ),
   stalls: z.array(
@@ -122,7 +164,39 @@ export const saveV2Schema = z.object({
   valueEma: z.number(),
   milestoneTier: z.number().int().min(-1),
   spawnAcc: z.number(),
+  // ── Phase 3 ──
+  coasters: z.array(coasterSchema),
+  staff: z.array(staffSchema),
+  staffIdCounter: z.number().int().nonnegative(),
+  weather: z.object({
+    current: z.enum(["sun", "cloud", "rain", "storm", "heat"]),
+    next: z.enum(["sun", "cloud", "rain", "storm", "heat"]),
+    changeAt: z.number().int().nonnegative(),
+  }),
+  research: z.object({
+    done: z.object({
+      thrill: z.number().int().min(0).max(6),
+      family: z.number().int().min(0).max(6),
+      food: z.number().int().min(0).max(6),
+      ops: z.number().int().min(0).max(6),
+    }),
+    active: z.enum(["thrill", "family", "food", "ops"]).nullable(),
+    funding: z.number().int().min(0).max(2),
+    progressDays: z.number().nonnegative(),
+    perks: z.array(z.string()),
+  }),
+  loans: z.object({
+    tranches: z.number().int().nonnegative(),
+    missedPayments: z.number().int().nonnegative(),
+    bankrupt: z.boolean(),
+  }),
+  events: z.object({ nextAt: z.number().int().nonnegative() }),
+  marketing: z.object({
+    activeKind: z.enum(["flyers", "radio", "tv", "influencer"]).nullable(),
+    activeEndsAt: z.number().int().nonnegative(),
+    hangoverUntil: z.number().int().nonnegative(),
+  }),
 });
 
-export type SaveV2 = z.infer<typeof saveV2Schema>;
-export type SaveFile = SaveV2; // latest version alias
+export type SaveV3 = z.infer<typeof saveV3Schema>;
+export type SaveFile = SaveV3; // latest version alias

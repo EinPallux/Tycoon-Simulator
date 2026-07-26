@@ -9,14 +9,16 @@ import { base64ToU8, u8ToBase64 } from "@/shared/encoding";
 import { createIdSource } from "@/shared/ids";
 import { restoreRng } from "@/shared/rng";
 import { getPlaceableDef } from "@/content/catalog";
+import { computeRun, computeStats, type Coaster } from "../coaster/coaster";
 import { addGuest, createGuestsPool, GUEST_STATE, type GuestCold } from "../entities/guests";
+import { createResearchState } from "../world/world";
 import { footprintTiles } from "../validate";
 import { createTileMap, tileIndex } from "../world/tiles";
 import type { PlacedEntity, World } from "../world/world";
 import { migrateSave } from "./migrate";
 import { CURRENT_FORMAT_VERSION, type SaveFile } from "./schema";
 
-export const APP_VERSION = "0.2.0";
+export const APP_VERSION = "0.3.0";
 
 export function serializeWorld(world: World): SaveFile {
   const g = world.guests;
@@ -74,6 +76,7 @@ export function serializeWorld(world: World): SaveFile {
       open: r.open,
       price: r.price,
       lifetimeRiders: r.lifetimeRiders,
+      reliability: r.reliability,
     })),
     stalls: [...world.stalls.values()].map((s) => ({ entityId: s.entityId, price: s.price })),
     economy: {
@@ -87,6 +90,36 @@ export function serializeWorld(world: World): SaveFile {
     valueEma: world.rating.valueEma,
     milestoneTier: world.milestoneTier,
     spawnAcc: world.spawnAcc,
+    coasters: [...world.coasters.values()].map((c) => ({
+      entityId: c.entityId,
+      family: c.family,
+      pieces: c.pieces.map((p) => ({ type: p.type, entry: { ...p.entry } })),
+    })),
+    staff: world.staff.map((s) => ({
+      id: s.id,
+      role: s.role,
+      name: s.name,
+      x: s.x,
+      z: s.z,
+      hiredDay: s.hiredDay,
+      jobsDone: s.jobsDone,
+    })),
+    staffIdCounter: world.staffIds.current(),
+    weather: { ...world.weather },
+    research: {
+      done: { ...world.research.done },
+      active: world.research.active,
+      funding: world.research.funding,
+      progressDays: world.research.progressDays,
+      perks: [...world.research.perks],
+    },
+    loans: { ...world.loans },
+    events: { nextAt: world.events.nextAt },
+    marketing: {
+      activeKind: world.marketing.active?.kind ?? null,
+      activeEndsAt: world.marketing.active?.endsAt ?? 0,
+      hangoverUntil: world.marketing.hangoverUntil,
+    },
   };
 }
 
@@ -139,7 +172,48 @@ export function worldFromSave(raw: unknown): World {
     },
     milestoneTier: save.milestoneTier,
     spawnAcc: save.spawnAcc,
+    coasters: new Map(),
+    staff: save.staff.map((s) => ({
+      ...s,
+      px: s.x,
+      pz: s.z,
+      heading: 0,
+      path: [],
+      pathStep: 0,
+      jobTarget: -1,
+      workT: 0,
+    })),
+    staffIds: createIdSource(save.staffIdCounter),
+    weather: { ...save.weather },
+    research: { ...createResearchState(), ...save.research, done: { ...save.research.done } },
+    loans: { ...save.loans },
+    events: { nextAt: save.events.nextAt, active: null },
+    marketing: {
+      active: save.marketing.activeKind
+        ? { kind: save.marketing.activeKind, endsAt: save.marketing.activeEndsAt }
+        : null,
+      hangoverUntil: save.marketing.hangoverUntil,
+    },
   };
+
+  // Revive coasters (stats & speeds recomputed — geometry is the truth).
+  for (const saved of save.coasters) {
+    const pieces = saved.pieces.map((p) => ({
+      type: p.type,
+      entry: { ...p.entry, dir: p.entry.dir as 0 | 1 | 2 | 3 },
+    }));
+    const run = computeRun(pieces);
+    const coaster: Coaster = {
+      entityId: saved.entityId,
+      family: saved.family,
+      pieces,
+      stats: computeStats(saved.family, pieces),
+      pieceSpeeds: run.pieceSpeeds,
+      pieceTimes: run.pieceTimes,
+      totalTime: run.totalTime,
+    };
+    world.coasters.set(saved.entityId, coaster);
+  }
 
   // Re-stamp occupancy from entities + revive ride/stall runtime state.
   for (const e of placeables.values()) {
@@ -147,18 +221,20 @@ export function worldFromSave(raw: unknown): World {
     for (const [tx, tz] of footprintTiles(def, e.x, e.z, e.rot)) {
       world.tiles.occupant[tileIndex(world.tiles, tx, tz)] = e.id;
     }
-    if (def.ride) {
+    if (def.ride || def.coasterFamily) {
       const saved = save.rides.find((r) => r.entityId === e.id);
       world.rides.set(e.id, {
         entityId: e.id,
         open: saved?.open ?? true,
-        price: saved?.price ?? def.ride.ticket,
+        price: saved?.price ?? def.ride?.ticket ?? 450,
         phase: "idle",
         phaseT: 0,
         riders: [],
         queue: [],
         lifetimeRiders: saved?.lifetimeRiders ?? 0,
         incomeToday: 0,
+        reliability: saved?.reliability ?? 100,
+        repairT: 0,
       });
     }
     if (def.stall) {

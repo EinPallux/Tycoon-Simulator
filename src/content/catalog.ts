@@ -99,6 +99,28 @@ export const PLACEABLE_DEFS: readonly PlaceableDef[] = [
     ticket: 500, runningPerDay: 2_000,
   }, 4),
 
+  // ── Coaster stations (placed via the coaster builder only) ─────────────
+  {
+    id: "coaster/mouse",
+    name: "Wild Mouse",
+    category: "ride",
+    footprint: [1, 2],
+    cost: 0,
+    beauty: 5,
+    requiresPathAdjacent: true,
+    coasterFamily: "mouse",
+  },
+  {
+    id: "coaster/flume",
+    name: "Log Flume",
+    category: "ride",
+    footprint: [1, 2],
+    cost: 0,
+    beauty: 5,
+    requiresPathAdjacent: true,
+    coasterFamily: "flume",
+  },
+
   // ── Stalls (CoasterKit models; items per GAME_DESIGN §15.6) ────────────
   stall("food", "Snack Shack", "stalls/food", 40_000, {
     satisfies: "hunger", item: "Burger", price: 400, cogs: 140,

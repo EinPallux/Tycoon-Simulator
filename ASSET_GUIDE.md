@@ -64,11 +64,11 @@ Everything a theme park needs to bootstrap:
 | Game content (`GAME_DESIGN.md §11`) | Primary kits | Notes |
 |---|---|---|
 | Paths, queues, park entrance, stations, supports | CoasterKit | auto-tiling brush uses the 6 path/queue pieces |
-| Tracked rides (5 families) | CoasterKit | piece catalogs + socket metadata authored in `content/` |
+| Tracked rides (5 families) | CoasterKit | piece catalogs authored in `sim/coaster/pieces.ts`; **shipped Phase 3:** `coaster/{mouse,flume}-{track,corner,slope,loop}` (`-track` = single tile, `corner-small`, `straight-hill-complete`, `looping`), `coaster/station`, `coaster/station-gate`, `coaster/support` (`support-small`), trains `coaster/train-front` + `coaster/train-car` (mouse) and `coaster/train-log` (flume) — anchoring conventions documented in `render/CoasterLayer.tsx` |
 | Stalls & facilities | CoasterKit stalls + FoodKit + RestaurantBits + MiniMarketKit | FoodKit's 200 food props = counter displays, item icons, theming |
 | Flat rides (12) | composed: GraveyardKit (Haunted Manor), SpaceKit (Star Simulator), MinigolfKit (Mini-Golf), RacingKit/ToyCarKit (Go-Karts), WatercraftKit (Swan Boats), TrainKit (Park Railroad) + **sourced CC0 hero models** for Carousel/Ferris/Drop Tower/Teacups/Swing Ship/Bumper Cars (§7) | composition = kit parts assembled into one prefab at pipeline time |
 | Guests | BlockyCharacters (18) + CuteCharacters (12 + mobility aids) | crowd = instanced; aids included for inclusive guest gen (`GAME_DESIGN.md §14`) |
-| Staff | BlockyCharacters recolors + prop (wrench/broom from RPGToolsBits/SurvivalKit) | tint slots via pipeline |
+| Staff | BlockyCharacters — **shipped Phase 3:** `staff/janitor` (character-e), `staff/mechanic` (character-f), `staff/entertainer` (character-g), distinct silhouettes per role | held props/tint slots deferred to the Phase-4 juice pass |
 | Advisor Penny | CuteCharacters female + EmotesPack | |
 | Scenery: Nature set | NatureKit (329) + MiniForest | trees, rocks, gardens, fences |
 | Scenery: Pirate set | PirateKit + WatercraftKit | ships, palms, crates, cannons |
@@ -91,7 +91,7 @@ Everything a theme park needs to bootstrap:
 | Gap | Plan |
 |---|---|
 | Carousel, Ferris Wheel, Drop Tower, Teacups, Swing Ship, Bumper Cars hero models | Source CC0 (Quaternius, Poly Pizza CC0 filter, Kenney future packs) or compose from kit parts; decision per ride at Phase 2 content authoring |
-| Steel/mouse coaster **cars** | Compose (ToyCarKit chassis + custom seat block) or source CC0 |
+| Steel/mouse coaster **cars** | ~~Compose or source~~ **Resolved (Phase 3):** CoasterKit ships them — `coaster-train.glb` / `coaster-train-front.glb` (used for Wild Mouse) + `train-log-flume.glb`; hanging/wooden variants ready for future families |
 | Water surface for Swan Boats/flume basins | Shader-based animated water tile (no model needed) |
 | Fireworks/particles | GPU sprites, generated (no asset) |
 | Audio (music + SFX) | Kenney Audio packs (CC0: UI, jingles, crowd), sourced at Phase 4; same licensing rules |

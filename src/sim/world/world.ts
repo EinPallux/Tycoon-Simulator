@@ -8,6 +8,9 @@ import { createIdSource, type IdSource } from "@/shared/ids";
 import { createRng, restoreRng, type Rng } from "@/shared/rng";
 import { createGuestsPool, type GuestsPool } from "../entities/guests";
 import { DEFAULT_ENTRY_PRICE, type ExpenseSource, type IncomeSource } from "../balance/economy";
+import type { CampaignKind, StaffRole, WeatherKind } from "../balance/phase3";
+import type { Coaster } from "../coaster/coaster";
+import type { ResearchBranchId } from "@/content/research";
 import { createTileMap, setOwnedRect, type TileMap } from "./tiles";
 import { TICKS_PER_DAY } from "./time";
 
@@ -62,13 +65,13 @@ export interface CameraState {
   zoom: number;
 }
 
-/** Per-placed-ride runtime state. */
+/** Per-placed-ride runtime state (flat rides AND coaster stations). */
 export interface RideState {
   entityId: number;
   open: boolean;
   /** Ticket price in cents (starts at def default). */
   price: number;
-  phase: "idle" | "loading" | "running" | "unloading";
+  phase: "idle" | "loading" | "running" | "unloading" | "broken";
   /** Ticks remaining in the current phase. */
   phaseT: number;
   /** Guest ids on board. */
@@ -78,6 +81,74 @@ export interface RideState {
   lifetimeRiders: number;
   /** Income today in cents (resets at day rollover). */
   incomeToday: number;
+  /** 0–100; low reliability breeds breakdowns (Phase 3). */
+  reliability: number;
+  /** Ticks of repair remaining while broken and being fixed (−1 = waiting). */
+  repairT: number;
+}
+
+export interface Staff {
+  id: number;
+  role: StaffRole;
+  name: string;
+  x: number;
+  z: number;
+  px: number;
+  pz: number;
+  heading: number;
+  /** Path being followed (tile indices) + step. */
+  path: number[];
+  pathStep: number;
+  /** Current job target: litter tile idx / ride entity id / queue tile (−1 none). */
+  jobTarget: number;
+  /** Ticks of current job work remaining (0 = walking/idle). */
+  workT: number;
+  hiredDay: number;
+  /** Career sweeps/repairs/cheers (skill grows with tenure). */
+  jobsDone: number;
+}
+
+export interface WeatherState {
+  current: WeatherKind;
+  /** What the forecast says comes next. */
+  next: WeatherKind;
+  /** Tick when `next` takes over. */
+  changeAt: number;
+}
+
+export interface ResearchState {
+  /** Nodes completed per branch (0..6). */
+  done: Record<ResearchBranchId, number>;
+  active: ResearchBranchId | null;
+  /** Funding level index into FUNDING_LEVELS. */
+  funding: number;
+  /** Research-days accumulated toward the next node. */
+  progressDays: number;
+  /** Perk flags earned. */
+  perks: string[];
+}
+
+export interface LoanState {
+  /** Extra tranches beyond the starting debt. */
+  tranches: number;
+  missedPayments: number;
+  /** Set when the bank has fully foreclosed — the park-over state. */
+  bankrupt: boolean;
+}
+
+export interface ActiveEvent {
+  kind: string;
+  endsAt: number;
+}
+
+export interface EventsState {
+  nextAt: number;
+  active: ActiveEvent | null;
+}
+
+export interface MarketingState {
+  active: { kind: CampaignKind; endsAt: number } | null;
+  hangoverUntil: number;
 }
 
 export interface StallState {
@@ -128,7 +199,16 @@ export interface RatingState {
 export const emptyDayLedger = (day: number): DayLedger => ({
   day,
   income: { entry: 0, rides: 0, stalls: 0, refunds: 0 },
-  expense: { construction: 0, upkeep: 0, goods: 0 },
+  expense: {
+    construction: 0,
+    upkeep: 0,
+    goods: 0,
+    wages: 0,
+    interest: 0,
+    repairs: 0,
+    research: 0,
+    marketing: 0,
+  },
 });
 
 export const createEconomy = (): EconomyState => ({
@@ -172,7 +252,26 @@ export interface World {
   milestoneTier: number;
   /** Fractional spawn accumulator. */
   spawnAcc: number;
+
+  // ── Coasters & chaos (Phase 3) ───────────────────────────────────────
+  /** Keyed by station entity id. */
+  coasters: Map<number, Coaster>;
+  staff: Staff[];
+  staffIds: IdSource;
+  weather: WeatherState;
+  research: ResearchState;
+  loans: LoanState;
+  events: EventsState;
+  marketing: MarketingState;
 }
+
+export const createResearchState = (): ResearchState => ({
+  done: { thrill: 0, family: 0, food: 0, ops: 0 },
+  active: null,
+  funding: 1,
+  progressDays: 0,
+  perks: [],
+});
 
 export interface NewParkConfig {
   name: string;
@@ -234,6 +333,14 @@ export function createWorld(config: NewParkConfig): World {
     },
     milestoneTier: -1,
     spawnAcc: 0,
+    coasters: new Map(),
+    staff: [],
+    staffIds: createIdSource(),
+    weather: { current: "sun", next: "sun", changeAt: START_TIME_TICKS + TICKS_PER_DAY / 2 },
+    research: createResearchState(),
+    loans: { tranches: 0, missedPayments: 0, bankrupt: false },
+    events: { nextAt: START_TIME_TICKS + TICKS_PER_DAY * 2, active: null },
+    marketing: { active: null, hangoverUntil: 0 },
   };
 }
 

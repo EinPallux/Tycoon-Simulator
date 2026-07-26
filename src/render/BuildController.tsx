@@ -10,6 +10,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import { MeshBasicMaterial } from "three";
 import { getPlaceableDef, SURFACES } from "@/content/catalog";
+import { FWD, pieceTiles, type Heading, type TrackNode } from "@/sim/coaster/pieces";
+import { isCoasterUnlocked } from "@/sim/research";
 import { canPlaceEntity, canPlaceSurface, rotatedFootprint } from "@/sim/validate";
 import { SURFACE_NONE, SURFACE_PATH, SURFACE_QUEUE } from "@/sim/world/tiles";
 import { WORLD_SIZE } from "@/sim/world/world";
@@ -17,6 +19,14 @@ import { formatMoney } from "@/ui/format";
 import { useGameStore, type Tool } from "@/ui/stores/gameStore";
 import { toModelAssetId, useModelParts } from "./useModelParts";
 import type { ModelAssetId } from "@/content/asset-manifest";
+
+/** Station entry node for a hovered tile + heading: the tile's rear edge. */
+function stationEntryAt(px: number, pz: number, rot: number): TrackNode {
+  const tileX = Math.floor(px);
+  const tileZ = Math.floor(pz);
+  const [fx, fz] = FWD[rot as Heading] as readonly [number, number];
+  return { x: tileX + 0.5 - fx * 0.5, z: tileZ + 0.5 - fz * 0.5, h: 0, dir: rot as Heading };
+}
 
 interface HoverState {
   tileX: number;
@@ -81,6 +91,27 @@ export function BuildController() {
           tileZ,
           anchorX,
           anchorZ,
+          valid: verdict.ok,
+          reason: verdict.ok ? null : verdict.reason,
+        };
+      }
+
+      if (t.kind === "coaster") {
+        // Once a draft exists, the builder panel drives — no ground hover.
+        if (useGameStore.getState().coasterDraft !== null) return null;
+        const entry = stationEntryAt(px, pz, t.rot);
+        const tiles = pieceTiles({ type: "station", entry });
+        const minX = Math.min(...tiles.map((tile) => tile[0]));
+        const minZ = Math.min(...tiles.map((tile) => tile[1]));
+        const defId = t.family === "mouse" ? "coaster/mouse" : "coaster/flume";
+        const verdict = !isCoasterUnlocked(sim.world, t.family)
+          ? { ok: false as const, reason: "Research this coaster type first" }
+          : canPlaceEntity(sim.world, defId, minX, minZ, t.rot);
+        return {
+          tileX,
+          tileZ,
+          anchorX: minX,
+          anchorZ: minZ,
           valid: verdict.ok,
           reason: verdict.ok ? null : verdict.reason,
         };
@@ -200,6 +231,12 @@ export function BuildController() {
         case "select":
           store.selectEntity(null); // entity clicks are handled by EntitiesLayer
           break;
+        case "coaster": {
+          if (store.coasterDraft === null && h.valid) {
+            store.startCoasterDraft(t.family, stationEntryAt(e.point.x, e.point.z, t.rot));
+          }
+          break;
+        }
         case "place": {
           sim.dispatch({
             type: "place-entity",
@@ -357,12 +394,98 @@ function GhostPreview({ tool, hover }: { tool: Tool; hover: HoverState }) {
     );
   }
 
+  if (tool.kind === "coaster") {
+    const w = tool.rot % 2 === 0 ? 1 : 2;
+    const d = tool.rot % 2 === 0 ? 2 : 1;
+    const [fx, fz] = FWD[tool.rot as Heading] as readonly [number, number];
+    return (
+      <group>
+        <StationGhost
+          anchorX={hover.anchorX}
+          anchorZ={hover.anchorZ}
+          w={w}
+          d={d}
+          rot={tool.rot}
+          color={color}
+        />
+        {/* Travel direction arrow off the station's far end. */}
+        <mesh
+          position={[
+            hover.anchorX + w / 2 + fx * (w / 2 + 0.4),
+            0.35,
+            hover.anchorZ + d / 2 + fz * (d / 2 + 0.4),
+          ]}
+          rotation={[Math.PI / 2, 0, -Math.atan2(fx, fz)]}
+        >
+          <coneGeometry args={[0.2, 0.5, 4]} />
+          <meshBasicMaterial color={color} transparent opacity={0.85} depthWrite={false} />
+        </mesh>
+        <mesh
+          position={[hover.anchorX + w / 2, 0.025, hover.anchorZ + d / 2]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <planeGeometry args={[w, d]} />
+          <meshBasicMaterial color={color} transparent opacity={0.3} depthWrite={false} />
+        </mesh>
+      </group>
+    );
+  }
+
   // Single-tile highlight for path/bulldoze hover.
   return (
     <mesh position={[hover.tileX + 0.5, 0.03, hover.tileZ + 0.5]} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[0.94, 0.94]} />
       <meshBasicMaterial color={color} transparent opacity={0.4} depthWrite={false} />
     </mesh>
+  );
+}
+
+/** Two station-platform tiles, oriented along the travel heading. */
+function StationGhost({
+  anchorX,
+  anchorZ,
+  w,
+  d,
+  rot,
+  color,
+}: {
+  anchorX: number;
+  anchorZ: number;
+  w: number;
+  d: number;
+  rot: number;
+  color: string;
+}) {
+  const parts = useModelParts("coaster/station");
+  const material = useMemo(
+    () => new MeshBasicMaterial({ transparent: true, opacity: 0.55, depthWrite: false }),
+    [],
+  );
+  material.color.set(color);
+  const yaw = Math.PI - (rot * Math.PI) / 2; // authored +z ↦ heading `rot`
+  const [fx, fz] = FWD[rot as Heading] as readonly [number, number];
+  const cx = anchorX + w / 2;
+  const cz = anchorZ + d / 2;
+  return (
+    <>
+      {[-0.5, 0.5].map((off) => (
+        <group
+          key={off}
+          position={[cx + fx * off, 0.02, cz + fz * off]}
+          rotation={[0, yaw, 0]}
+        >
+          {parts.map((part, i) => (
+            <mesh
+              key={i}
+              geometry={part.geometry}
+              material={material}
+              matrix={part.matrix}
+              matrixAutoUpdate={false}
+            />
+          ))}
+        </group>
+      ))}
+    </>
   );
 }
 

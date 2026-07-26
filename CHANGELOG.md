@@ -7,6 +7,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 *(nothing yet)*
 
+## [0.3.0] — 2026-07-26 — Phase 3: Coasters & Chaos
+
+### Added
+- **Coaster builder** (the flagship): Wild Mouse + Log Flume families with a 7-piece grid-snapped vocabulary (2-tile station, straight, radius-2 corners, ±1-level slopes with chain lifts, vertical loop). Station placement tool with direction ghost, then button/hotkey drafting (W/A/D/R/F/L, Backspace, Enter) with live ghost track, home beacon + distance-to-close hint, live stats & cost — committed as ONE undoable `build-coaster` command. Underground/height/land constraints validated piece-by-piece.
+- **Coaster physics & stats from geometry**: per-piece energy model (chain lifts, friction, gravity) → speeds, ride time, excitement/intensity/nausea, drops/inversions — shown in the builder, the inspector, and used by guest thrill-matching. Piece-perfect track rendering from Kenney CoasterKit (one corner model serves both chiralities; slopes/loops entry-anchored) with auto-support columns and an arc-length-spaced animated train (analytic up-vector through the loop).
+- **Staff**: janitors sweep litter, mechanics claim and repair broken rides (skill grows with tenure), entertainers cheer the longest queue — hire/fire dock tray with live roster, weekly payday, distinct character models with walk/work animations.
+- **Breakdowns & maintenance**: reliability decay per day/cycle, mid-cycle breakdowns with comedy smoke puffs + queue-flush grumbles, mechanic repair (+70 reliability), $250 contractor fallback, renovate at 40% of build cost, reliability bar + repair controls in the inspector.
+- **Loans & the debt spiral**: $5,000 tranches (+1.5% APR each) against a park-value credit limit, daily interest, missed-payment penalties, 3-miss repossession auctions (55% pays down debt) and the "The bank owns the teacups now" park-over sheet. Soak-tested: mismanaged tycoon parks fold inside 30 days, managed ones escape clean.
+- **Research**: 4 branches × 6 nodes (rides, coaster families, stalls, scenery, 10 gameplay perks), Paused/Standard/Turbo funding, progress bar, unlock toasts, lock badges across the build dock; freeplay parks skip content gates but still earn perks.
+- **Weather**: sun/cloud/rain/storm/heatwave with dawn/midday transitions — arrival/thirst/leave-now modifiers, smooth sky/light grading, camera-following rain particles, top-bar chip with forecast tooltip.
+- **Events v1** (6): VIP visit, safety inspection (fines shabby rides), influencer moment (crowd surge), coaster enthusiast club (+2 coaster excitement), litter-rat scare, lost wallet — with an active-event HUD chip.
+- **Marketing**: 4 campaigns (flyers/radio/TV/influencer) gated on the Marketing Licence perk, one at a time, with the under-delivery hangover rule; managed from Finances.
+- **Finances additions**: wages/interest/repairs/research/marketing ledger rows, bank section (APR, credit limit, borrow/repay), campaign cards. **Guests tab**: "overheard in the park" thought tally. **Park panel**: new Research tab.
+- **Save v3** with v2→v3 migration + fixture test: coasters (geometry is the truth — stats/speeds recomputed on load), staff, weather, research, loans, events, marketing, ride reliability, widened ledger.
+- Phase-3 test suite: 18 tests (track geometry closure, physics sanity, build/undo/save round-trips, staff jobs, contractor repair, research gating, loan flows, weather vocabulary, both debt-spiral soaks) → 51 total; new coaster e2e drives the real builder UI end-to-end.
+
+### Changed
+- Rides dock tray hides coaster stations (built via the Coasters tray) and shows research locks; settings commands (hire, loans, repairs) refresh the HUD cash immediately.
+
+### Notes
+- Verified in-browser via scripted screenshots: track/train/supports/loop rendering, builder draft ghost, staff at work, rain + breakdown smoke, research/finances/inspector panels.
+
 ## [0.2.0] — 2026-07-25 — Phase 2: The Living Park
 
 ### Added

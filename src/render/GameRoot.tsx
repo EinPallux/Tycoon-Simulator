@@ -167,7 +167,26 @@ function wireSimEvents(sim: SimHandle): void {
     sfx.fanfare();
   });
   sim.events.on("notify", ({ tone, message }) => toast(tone, message));
+  // ── Coasters & chaos ──
+  sim.events.on("weather-changed", ({ kind }) => useGameStore.getState().setHud({ weather: kind }));
+  sim.events.on("research-done", () => {
+    // Unlock badges (dock, coaster trays) re-derive from the world.
+    useGameStore.getState().bumpWorld();
+    sfx.fanfare();
+  });
+  sim.events.on("ride-fixed", () => sfx.thunk());
+  sim.events.on("park-over", ({ reason }) => {
+    useGameStore.getState().setParkOver(reason);
+    useGameStore.getState().setSpeed(0);
+  });
 }
+
+/** Short HUD chip labels for active dynamic events. */
+const EVENT_LABELS: Record<string, string> = {
+  vip: "🎩 VIP visiting",
+  influencer: "🤳 Streamer on site",
+  "coaster-club": "🎢 Coaster Club visit",
+};
 
 // ── Fixed-timestep driver (10 Hz logic × speed) ──────────────────────────
 
@@ -201,7 +220,10 @@ function useSimLoop(sim: SimHandle | null): void {
       const clock = formatClock(sim.world.time);
       if (clock !== lastClock) {
         lastClock = clock;
-        useGameStore.getState().setHud({ clock });
+        // Once per sim-minute: clock + slow ambient mirrors (event chip).
+        const active = sim.world.events.active;
+        const eventLabel = active ? (EVENT_LABELS[active.kind] ?? null) : null;
+        useGameStore.getState().setHud({ clock, eventLabel });
       }
     };
     raf = requestAnimationFrame(frame);
@@ -249,6 +271,8 @@ function useKeyboard(sim: SimHandle | null, saveId: string | null): void {
           const tool = store.tool;
           if (tool.kind === "place") store.setTool({ ...tool, rot: (tool.rot + 1) % 4 });
           if (tool.kind === "move") store.setTool({ ...tool, rot: (tool.rot + 1) % 4 });
+          if (tool.kind === "coaster" && store.coasterDraft === null)
+            store.setTool({ ...tool, rot: (tool.rot + 1) % 4 });
           break;
         }
         case "z":

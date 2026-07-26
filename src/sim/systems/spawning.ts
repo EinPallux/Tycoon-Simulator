@@ -16,10 +16,12 @@ import {
   SPAWN_PER_RATING,
 } from "../balance/guests";
 import { addGuest } from "../entities/guests";
+import { hasPerk } from "../research";
 import { isStrollable } from "../world/pathfind";
 import { dayOfTime, TICKS_PER_DAY, timeOfDay01 } from "../world/time";
 import type { World } from "../world/world";
 import type { SimEvents } from "../api";
+import { spawnModifiers } from "./weather";
 
 /** Is there a path connected to the entrance's inner edge? */
 export function parkIsOpen(world: World): boolean {
@@ -38,7 +40,12 @@ export function spawningSystem(world: World, events: Emitter<SimEvents>): void {
 
   const entryDollars = world.economy.entryPrice / 100;
   const value = entryValue(entryDollars, world.rating.value);
-  const perDay = (SPAWN_BASE_PER_DAY + world.rating.value * SPAWN_PER_RATING) * value;
+  const mouth = hasPerk(world, "word-of-mouth") ? 1.1 : 1;
+  const perDay =
+    (SPAWN_BASE_PER_DAY + world.rating.value * SPAWN_PER_RATING) *
+    value *
+    spawnModifiers(world) *
+    mouth;
   world.spawnAcc += (perDay * curve * 2.2) / TICKS_PER_DAY;
 
   if (world.spawnAcc < 1) return;

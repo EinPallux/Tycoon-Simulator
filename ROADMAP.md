@@ -69,24 +69,24 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 
 **Goal:** the flagship creative tool + the full management fantasy: risk, debt, staff, research. This is the phase that makes it *a tycoon game*.
 
-**Scope**
-- [ ] Coaster builder: 5 track families, piece-by-piece placement with sockets/constraints, auto-supports, circuit validation, train config, arc-length train motion, test-run with onboard/chase cam
-- [ ] Coaster stats from geometry (excitement/intensity/nausea per `GAME_DESIGN.md §15.3`) + guest response to stats
-- [ ] Remaining 6 flat rides + walk-through attractions (Mini-Golf, Go-Karts, Railroad, Swan Boats)
-- [ ] Staff: mechanics/janitors/entertainers — hire/fire, wages, patrol zone painting, pathing, skill growth; litter/vomit cleanup loop closes
-- [ ] Breakdowns & maintenance: reliability, inspections, comedic malfunction VFX, repair flow, renovate/aging
-- [ ] Loans & debt: tranches, credit limit, interest accrual, warnings, repossession spiral → "park over" sheet with restart/rewind (`GAME_DESIGN.md §6.3`)
-- [ ] Research: 4 branches × 6 nodes, funding tiers, unlock toasts; content gated accordingly
-- [ ] Weather: sun/cloud/rain/storm/heatwave — spawn & need modifiers, umbrellas/cover behavior, forecast strip
-- [ ] Events v1 (≥6): VIP visit, safety inspection, heatwave rush, litter-rat scare, influencer moment, coaster enthusiast club
-- [ ] Marketing campaigns (4 types, hangover rule)
-- [ ] Guest aggregate analytics panel (thought clouds, demographics)
+**Scope** *(status: code complete 2026-07-26 — verified in-browser via scripted park + screenshots; deferred slices annotated)*
+- [x] Coaster builder: grid-snapped piece placement (7 piece types), circuit validation, auto-supports, arc-length train motion, live ghost + home beacon + hotkeys, one-command undoable commit (*2 of 5 families shipped — Wild Mouse + Log Flume; Steel/Inverted/Monorail, train config and the test-run cam ride the Phase-4/5 content pass on the same piece system*)
+- [x] Coaster stats from geometry (energy-model physics; excitement/intensity/nausea per `GAME_DESIGN.md §15.3` as-built) + guest thrill-matching response
+- [ ] Remaining 6 flat rides + walk-through attractions (Mini-Golf, Go-Karts, Railroad, Swan Boats) — *moved to Phase 4 content pass; Phase 3 shipped the systems, not the catalog*
+- [x] Staff: mechanics/janitors/entertainers — hire/fire tray, weekly wages, self-assigning jobs (nearest litter / broken rides / longest queue), pathing, skill growth; litter cleanup loop closes (*patrol-zone painting + overworked marker → Phase 4*)
+- [x] Breakdowns & maintenance: reliability decay, smoke-puff malfunction VFX, queue-flush grumbles, mechanic repair, $250 contractor, renovate at 40% (*scheduled inspections + aging → Phase 5 balancing; the inspection EVENT fines shabby rides today*)
+- [x] Loans & debt: $5k tranches at +1.5% APR, park-value credit limit, daily interest, miss penalties, 3-miss repossession auctions → "The bank owns the teacups now" park-over sheet (`GAME_DESIGN.md §6.3` as-built)
+- [x] Research: 4 branches × 6 nodes, 3 funding tiers, unlock toasts, dock lock badges; content gated in progression parks, perks everywhere
+- [x] Weather: sun/cloud/rain/storm/heatwave — spawn/thirst/leave modifiers, sky grading + rain particles, top-bar chip with forecast tooltip (*umbrella/cover behavior → Phase 4 juice*)
+- [x] Events v1 (6): VIP visit, safety inspection, influencer moment, coaster enthusiast club, litter-rat scare, lost wallet — event chip + toasts
+- [x] Marketing campaigns (4 types, one at a time, marketing-licence gate, under-delivery hangover rule)
+- [x] Guest aggregate analytics: needs trends + "overheard in the park" thought tally (*demographics charts → Phase 4*)
 
 **Acceptance criteria**
-1. Build a 40+ piece flume coaster with a loop; test-run reports plausible stats; open it; guests queue by preference; onboard cam is smooth at 60 fps.
-2. Neglect maintenance → breakdown cascade → rating slide → recover via mechanics + renovation: the full crisis loop is playable and *legible* (hints name the cause).
-3. "Loan Ranger"-style pressure works: at 11% interest a mismanaged park goes bankrupt inside 30 game-days; a managed one escapes (soak-tested both ways).
-4. Sim tick p95 ≤ 4 ms at 500 guests + 3 running coasters + 12 staff.
+1. 🟡 Coaster loop verified in-browser: 15-piece Wild Mouse with lift, vertical loop and drop — built via the real builder UI (e2e) and the sim hook (screenshots); stats plausible (E4.9/I2.7/N1.6, 26 km/h, 20 s); guests queued and rode (36 riders day 1). The 40+ piece flume + onboard-cam slice lands with the cam in Phase 4.
+2. ✅ Crisis loop playable & legible: breakdown → smoke + toast + queue grumbles → mechanic/contractor/renovate recovery; safety-inspection fines name the shabby rides (verified in-browser + unit-tested).
+3. ✅ "Loan Ranger" pressure soak-tested both ways (`phase3.test.ts`): a mismanaged tycoon-difficulty park goes bankrupt inside 30 game-days; a managed one escapes with zero missed payments.
+4. 🟡 Sim tick p95 ≤ 4 ms at 500 guests + 3 coasters + 12 staff — needs the real-GPU/profiling pass (headless SwiftShader can't measure it); revisit with Phase-4 performance hardening.
 
 ---
 

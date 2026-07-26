@@ -92,6 +92,18 @@ Piece-by-piece track construction, RCT-style but 3D:
 - **Constraints:** max slope per family, min turn radius, chain lift on climbs, block-brake not modeled in 1.0 (single-train safety spacing instead), track must close.
 - **Save/share coaster blueprints** (post-1.0 backlog).
 
+> **As shipped (Phase 3):** two families live — **Wild Mouse** and **Log Flume** — with a
+> 7-piece vocabulary: station (2 tiles, chain 1.4 u/s), straight, corner L/R (radius-2
+> quarter turns; one model serves both chiralities — a left is the right corner anchored at
+> its exit), slope up/down (4 tiles, ±1 height level, chain lift on climbs), vertical loop
+> (4 tiles, inversion). Grid-snapped N/E/S/W headings, height levels 0–6 (cap raisable by
+> the *Extreme Engineering* perk — pending). The builder is button/hotkey-driven from the
+> station outward with a live ghost, home beacon, distance-to-close hint, live stats & cost;
+> commit is a single undoable `build-coaster` command. One train per coaster (2 cars),
+> arc-length-spaced. Steel/Inverted/Monorail families, train config and the test-run
+> onboard cam are the Phase-4/5 content & polish slice — the piece math is family-agnostic,
+> so new families are data + models, not new systems.
+
 ---
 
 ## 5. Guests
@@ -140,11 +152,33 @@ Player sets: park entry, per-ride tickets, per-item stall prices. Guests compare
 - **Debt spiral warning UX:** interest > 25% of weekly profit triggers advisor warnings; missed payments (cash < interest) add penalty fees and −50 park rating.
 - **Repossession spiral (the fail pressure):** after 3 consecutive missed payments the bank starts seizing and auctioning assets one at a time (comedic, brutal, recoverable — sell-off, refinance and staff cuts can still save you). If the **park entrance** itself is ever seized, the park is over: a firm-but-kind "Bank Owns The Fun Now" sheet with stats roll-up, then restart or rewind-to-autosave. Severity scales with difficulty (§15.7).
 
+> **As shipped (Phase 3):** interest accrues **daily** at APR/364 (simpler feedback loop
+> than monthly — a deliberate deviation). Tranches are $5,000 each at +1.5% APR; credit
+> limit = 60% of park value (+$10,000 base allowance). A miss (cash < the day's interest)
+> costs a $100 penalty + a guest-mood hit; the third consecutive miss seizes the
+> highest-value ride/scenery — 55% of its auction price pays down debt, the bank pockets
+> the rest — and leaves you at "one more chance". Nothing left to seize → the park-over
+> sheet ("The bank owns the teacups now") with stats roll-up, *Back to the hub* or
+> *Wander the ruins*. Soak-tested both directions (ROADMAP P3 acceptance #3).
+
 ### 6.4 Research (Phase 3)
 Fund a workshop ($/week, 3 speed tiers) to progress one of four branches: **Thrill** (coasters, intense flats), **Family** (gentle rides, entertainment), **Food & Retail** (stall tiers, souvenirs), **Operations** (staff efficiency, marketing tiers, reliability upgrades). ~24 nodes for 1.0 (§11.4). Research is the guided sandbox's unlock spine — the player chooses which branch to push, which *is* the "explore what works for you" freedom. (A "Freeplay unlocks" toggle at park creation starts with everything open for pure creative play.)
 
+> **As shipped (Phase 3):** 4 branches × 6 nodes exactly as §11.4; funding tiers are
+> **per-day** — Paused $0 (0×), Standard $150 (1×), Turbo $400 (1.8×) — charged at day
+> rollover while a branch is active. Freeplay parks skip content gates but still research
+> perk nodes.
+
 ### 6.5 Marketing
 4 campaign types (flyers, radio, TV, influencer visit), each: cost, duration, targeted guest-type boost. Diminishing returns; a "marketing hangover" if the park under-delivers on the promise (rating < advertised expectation → temporary appeal dip). Unlocked via Operations research.
+
+> **As shipped (Phase 3):** Flyer Blitz $500/3d/×1.15 · Radio Spots $1,200/4d/×1.3 ·
+> TV Advert $3,000/5d/×1.5 · Influencer Day $2,000/2d/×1.8 (arrival multipliers). One
+> campaign at a time, gated on the *Marketing Licence* perk. Hangover: rating < 500 at
+> campaign end → arrivals ×0.8 for 2 days. Weather also multiplies arrivals (sun 1.1,
+> cloud 1.0, rain 0.55, storm 0.2 + everyone-leaves, heatwave 0.95 with ×1.7 thirst), and
+> six dynamic events spice the days: VIP visit, safety inspection, influencer moment,
+> coaster club (+2 excitement on coasters), litter rats, lost wallet.
 
 ---
 
@@ -160,6 +194,14 @@ Hire/fire from the management panel; each staffer has a wage, a patrol zone (pai
 
 Security is post-1.0 (vandalism appears only as a rare event in 1.0). Staff pathfind on paths + staff-only gates; wages weekly; overworked staff (zone too big) show a red "!" and work slower — the fix is hiring, zoning, or Operations research perks.
 
+> **As shipped (Phase 3):** hire/fire from the Staff dock tray (janitor $50 + $110/wk,
+> mechanic $80 + $160/wk, entertainer $60 + $130/wk; cap 24). No patrol zones yet — staff
+> self-assign park-wide: janitors hunt the nearest litter, mechanics claim broken rides,
+> entertainers work the longest queue (patience relief + fun sprinkle within 3 tiles), all
+> idle-wander otherwise. Skill grows with jobs done (mechanics repair up to 50% faster);
+> *Golden Brooms* / *Swift Wrenches* perks stack on top. Zones + the overworked marker
+> arrive with Phase-4 polish.
+
 ---
 
 ## 8. Rides operations, breakdowns & maintenance
@@ -168,6 +210,14 @@ Security is post-1.0 (vandalism appears only as a rare event in 1.0). Staff path
 - **Breakdown:** ride stops, queue freezes, comedic malfunction VFX (smoke puffs, boinging springs — never harm). Mechanic travels, repairs (repair time ∝ severity), costs $. Frequent breakdowns → guests distrust the ride (temporary excitement penalty).
 - **Aging:** after ~5 in-game years a ride's base appeal depreciates; **Renovate** (40% of build cost) resets it — long-term parks must reinvest, not just extract.
 - Player levers: per-ride inspection interval, ride ticket price, open/close, renovate, demolish.
+
+> **As shipped (Phase 3):** reliability decays 2.2/day + 0.22/cycle; breakdown odds rise
+> as it falls (§15.3 as-built). A breakdown stops the ride mid-cycle with smoke-puff VFX,
+> flushes the queue with a grumble, and waits for a mechanic — or a **$250 contractor**
+> (90 s). **Renovate** (40% of build cost) resets reliability to 100 any time it dips
+> below 70. The scheduled-inspection lever and age depreciation land with the Phase-5
+> balancing pass; the random *safety inspection* event already fines shabby parks ($150
+> per ride under 50 reliability).
 
 ---
 
@@ -199,7 +249,7 @@ Cross-save badges in the hub (examples): *First Blood(less)* — survive 10 brea
 Counts are commitments for 1.0; sources per `ASSET_GUIDE.md` mapping table.
 
 ### 11.1 Tracked rides (5 families)
-Steel Coaster · Log Flume · Inverted Coaster · Wild Mouse · Park Monorail — full piece sets from Kenney CoasterKit (stations, supports, trains included).
+Steel Coaster · Log Flume · Inverted Coaster · Wild Mouse · Park Monorail — full piece sets from Kenney CoasterKit (stations, supports, trains included). *(Phase 3 ships Wild Mouse + Log Flume; the remaining three are Phase-4/5 content on the same piece system.)*
 
 ### 11.2 Flat rides & attractions (12)
 Carousel, Ferris Wheel, Drop Tower, Spinner/Teacups, Swing Ship, Bumper Cars, Haunted Manor (GraveyardKit build), Star Simulator (SpaceKit build), Mini-Golf (MinigolfKit, walk-through attraction), Go-Kart Circuit (RacingKit/ToyCarKit), Swan Boats (WatercraftKit, on placed water basin prop), Park Railroad Station ride (TrainKit). *Flat-ride hero models are composed from kit parts and/or sourced CC0 (Quaternius/PolyPizza) per `ASSET_GUIDE.md §7`.*
@@ -271,11 +321,13 @@ Fun −4 (idle) · Hunger −2.2 · Thirst −3 (+50% in heat, Phase 3) · Energ
 ### 15.2 Flat ride envelope (Carousel → Sky Plunge, as shipped)
 Build $2,200–$4,200 · footprint 2×2–4×3 · capacity 8–20 · cycle **7–12 real seconds** (≈2–3 park hours — cycles live in real time so rides stay watchable against 90 s days; boarding 3 s, unload 1.8 s, part-full dispatch after 7 s) · excitement 4.2–6.5 · intensity 1.4–6.8 · nausea 0.8–4.2 · running $12–22/day · default ticket $3–5.50 · reliability decay arrives Phase 3.
 
-### 15.3 Coaster stat formulas (v1, tune in Phase 3)
-- Excitement = 1.2 + 0.9·drops + 1.4·inversions + 0.028·max_speed(km/h) + 0.35·airtime_s + theming_bonus(0–1.5) − 0.5·roughness, clamp 0–10.
-- Intensity = 0.020·max_speed + 1.1·inversions + 0.8·max_g_proxy (slope/curve deltas), clamp 0–10.
-- Nausea = 0.55·intensity + 0.9·spin_elements − 0.3·smoothness, clamp 0–10. Guests reject rides with intensity > tolerance+2; excitement→value: perceived $ ≈ excitement × $0.90.
-- Breakdown chance/day = base 1.5% × (2 − reliability) × age_factor; inspection resets reliability toward 100% (mechanic skill-scaled).
+### 15.3 Coaster stat formulas (as built in Phase 3)
+- Physics: energy model per piece — v² ← v²·0.985 + 2·5.2·(−Δh), clamped 1.0–8.5 u/s; stations/chain lifts force 1.4/1.6 u/s; two convergence laps. km/h = u/s × 2 × 3.6.
+- Excitement = 1.2 + 0.9·drops + 1.4·inversions + 0.028·max_speed(km/h) + 0.35·airtime_s (0.5/drop) + 0.12·turns, clamp 0–10. *(Theming bonus & roughness join with the Phase-4 theming zones.)*
+- Intensity = 0.020·max_speed + 1.1·inversions + 0.5·drops + 0.15·turns, clamp 0–10.
+- Nausea = 0.55·intensity + 0.45·inversions − 0.9·family_smoothness (mouse 0.4, flume 0.7), clamp 0–10. Guests reject rides with intensity > tolerance+2; excitement→value: perceived $ ≈ excitement × $0.90.
+- Breakdown chance/day = 0.3 × (2 − reliability/100) × perk_mult (Preventive Care 0.65, Predictive 0.4); mechanic repair restores +70 reliability (skill/perk-scaled speed).
+- Piece prices: straight $180 · corner $240 · slope-up $380 · slope-down $320 · loop $1,400; family base — Wild Mouse $8,000 (ticket $4.50, upkeep $26/day), Log Flume $9,000 (ticket $4.00, upkeep $24/day).
 
 ### 15.4 Park rating terms
 happiness_term = avg(mood)·10 → ×0.35 · rides_term = (Σ excitement capped, variety bonus, uptime %)→ ×0.25 · cleanliness (litter/vomit density, bin coverage) ×0.15 · scenery (beauty density near paths, zone count) ×0.15 · value (avg "fair price" verdicts) ×0.10. Displayed with per-term trend arrows.

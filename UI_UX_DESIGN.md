@@ -172,6 +172,17 @@ The signature control. A skewed dock of 7 `CategoryCard` minis: **Paths · Coast
 - **Park panel (tabs):** Goals (active Opportunities + offer + milestone track), Finances (P&L table + charts, loans w/ big scary interest row), Guests (aggregate thoughts, demographics), Rides (DataTable), Staff (roster, hire cards, zone paint button), Rating (five-term breakdown w/ hints), Research (4-branch tree, node cards w/ progress slash), Marketing (campaign cards).
 - **Coaster builder panel:** piece palette (family-filtered), constraint readouts (slope/radius), live stat preview dials, test-run controls (run/onboard cam/abort), train config, cost ticker, CLOSE CIRCUIT accent button.
 
+> **As shipped (Phase 3):** the builder panel docks left with a 6-piece button grid
+> (hotkeys W/A/D/R/F/L shown as kbd chips; invalid pieces disabled with the sim's reason
+> as tooltip), undo-piece/cancel row, an open/closed circuit strip with a
+> distance-to-home hint, three live stat dials + speed/time/drops line, and one accent
+> BUILD button with the full price. Staff live in a build-dock tray (hire cards + roster
+> chips with fire ✕), not a Park-panel tab. The Park panel ships Finances (with bank +
+> marketing sections), Research, Guests (needs trends + thought tally) and Rating;
+> Goals/Rides tabs arrive with Phase 4. A weather chip (+ forecast tooltip) and an
+> active-event chip join the top bar; bank foreclosure raises a full-screen park-over
+> sheet. Test-run cam and train config follow the onboard camera in Phase 4.
+
 ### 7.7 In-world overlays
 Emote bubbles (billboarded, distance-faded, density-capped), zone banners, queue-length glow on hover, litter/beauty heatmap toggles (`H`), ghost previews, selection outline (accent), breakdown smoke + "!" marker.
 
