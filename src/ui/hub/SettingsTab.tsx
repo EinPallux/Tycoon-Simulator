@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useAppStore } from "@/ui/stores/appStore";
 import { HeroHeader } from "@/ui/kit/HeroHeader";
 import { Button } from "@/ui/kit/Button";
@@ -13,11 +12,7 @@ export function SettingsTab() {
   const updateSettings = useAppStore((s) => s.updateSettings);
   const resetSettings = useAppStore((s) => s.resetSettings);
 
-  // Apply live-effect settings to the document.
-  useEffect(() => {
-    document.documentElement.dataset.reducedMotion = String(settings.reducedMotion);
-    document.documentElement.style.fontSize = `${16 * settings.uiScale}px`;
-  }, [settings.reducedMotion, settings.uiScale]);
+  // (Live application happens globally in ui/GlobalSettings.tsx.)
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -35,9 +30,27 @@ export function SettingsTab() {
           />
           <Toggle
             label="Reduced motion"
-            hint="Minimizes shakes, wipes and parallax"
+            hint="Minimizes shakes, particles and parallax"
             checked={settings.reducedMotion}
             onChange={(v) => updateSettings({ reducedMotion: v })}
+          />
+          <Toggle
+            label="Reduced flash"
+            hint="No fireworks or bright bursts"
+            checked={settings.reducedFlash}
+            onChange={(v) => updateSettings({ reducedFlash: v })}
+          />
+          <Toggle
+            label="Colorblind-safe statuses"
+            hint="Blue = good, orange = trouble (instead of green/red)"
+            checked={settings.colorblind}
+            onChange={(v) => updateSettings({ colorblind: v })}
+          />
+          <Toggle
+            label="Dyslexia-friendlier font"
+            hint="Atkinson Hyperlegible for body text"
+            checked={settings.dyslexiaFont}
+            onChange={(v) => updateSettings({ dyslexiaFont: v })}
           />
           <Toggle
             label="FPS overlay"
@@ -47,7 +60,7 @@ export function SettingsTab() {
           />
         </Section>
 
-        <Section title="Audio" note="The audio engine arrives in Phase 2 — levels are saved now.">
+        <Section title="Audio" note="Music, effects and the crowd share three faders.">
           <Slider
             label="Master volume"
             value={settings.masterVolume}
@@ -88,8 +101,9 @@ export function SettingsTab() {
           />
           <div className="bg-paper-100 px-4 py-3 text-xs text-ink-600">
             <b className="text-ink-900">Keys:</b> WASD pan · Q/E rotate · Wheel zoom · Space pause ·
-            1/2/3 speed · B build · R rotate piece · Del bulldoze · Z / Shift+Z undo/redo · Esc back
-            — remapping arrives in Phase 4.
+            1/2/3 speed · B build · R rotate piece · P photo mode · Del bulldoze · Z / Shift+Z
+            undo/redo · Esc back · coaster drafting W/A/D/R/F/L — remapping lands with the Phase-5
+            release polish.
           </div>
         </Section>
 

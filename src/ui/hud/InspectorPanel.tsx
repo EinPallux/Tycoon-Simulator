@@ -260,6 +260,12 @@ function CoasterSection({
       <Row label="Riders (lifetime)" value={`${ride.lifetimeRiders}`} />
       <Row label="Income today" value={formatMoney(ride.incomeToday)} />
       <Row label="Upkeep" value={`${formatMoney(family.runningPerDay)}/day`} />
+      <Button
+        size="sm"
+        onClick={() => useGameStore.getState().setOnboardCoaster(entity.id)}
+      >
+        🎥 Ride it (onboard cam)
+      </Button>
     </>
   );
 }

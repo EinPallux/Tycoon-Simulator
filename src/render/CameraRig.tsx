@@ -144,6 +144,8 @@ export function CameraRig() {
   }, [camera, gl]);
 
   useFrame((_, rawDt) => {
+    // The coaster onboard cam owns the camera while riding.
+    if (useGameStore.getState().onboardCoaster !== null) return;
     const dt = Math.min(rawDt, 0.05);
     const s = state.current;
 

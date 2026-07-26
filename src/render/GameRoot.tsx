@@ -106,6 +106,7 @@ export default function GameRoot() {
           shadows
           dpr={[1, 2]}
           camera={{ fov: 45, near: 0.5, far: 600 }}
+          gl={{ preserveDrawingBuffer: true }}
           onCreated={() => setSceneReady(true)}
           className="!absolute inset-0"
         >
@@ -292,6 +293,10 @@ function useKeyboard(sim: SimHandle | null, saveId: string | null): void {
         case "F3":
           e.preventDefault();
           store.togglePerfOverlay();
+          break;
+        case "p":
+        case "P":
+          store.setPhotoMode(!store.photoMode);
           break;
       }
     };

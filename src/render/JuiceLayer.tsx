@@ -152,7 +152,8 @@ export function JuiceLayer() {
         sfx.chime();
       }),
       sim.events.on("milestone", () => {
-        if (reduced()) return;
+        // Fireworks respect BOTH reduced-motion and reduced-flash.
+        if (reduced() || useAppStore.getState().settings.reducedFlash) return;
         // Three firework waves over the park center.
         const cx = world.ownedRect.x0 + world.ownedRect.w / 2;
         const cz = world.ownedRect.z0 + world.ownedRect.d / 2;

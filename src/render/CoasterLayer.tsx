@@ -14,7 +14,7 @@
  *  - slope-down is slope-up anchored at the exit, facing backward.
  */
 
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { Group, Matrix4, MeshBasicMaterial, Vector3 } from "three";
 import type { ModelAssetId } from "@/content/asset-manifest";
@@ -134,6 +134,48 @@ export function supportPlacements(pieces: PlacedPiece[]): ModelPlacement[] {
 
 // ── The layer ────────────────────────────────────────────────────────────
 
+/**
+ * Onboard cam (GAME_DESIGN.md §16): ride the front car of a coaster.
+ * Takes over the camera while store.onboardCoaster is set; Esc hops off.
+ */
+function OnboardCam() {
+  const camera = useThree((s) => s.camera);
+  const eye = useMemo(() => new Vector3(), []);
+  const ahead = useMemo(() => new Vector3(), []);
+
+  useFrame(() => {
+    const store = useGameStore.getState();
+    const sim = store.sim;
+    const id = store.onboardCoaster;
+    if (!sim || id === null) return;
+    const coaster = sim.world.coasters.get(id);
+    const ride = sim.world.rides.get(id);
+    if (!coaster || coaster.totalTime <= 0) {
+      store.setOnboardCoaster(null);
+      return;
+    }
+    const chain = 1.4;
+    const offTime = Math.min(PARKED_ARC / chain, coaster.totalTime * 0.25);
+    let tSec = offTime;
+    if (ride && ride.phase === "running") {
+      const cycleSec = Math.max(8, coaster.totalTime);
+      const elapsed = Math.max(0, cycleSec - (ride.phaseT - renderClock.alpha) / 10);
+      tSec = elapsed < coaster.totalTime ? (elapsed + offTime) % coaster.totalTime : offTime;
+    }
+    const { arc, total } = arcAtTime(coaster, tSec);
+    const at = locateByArc(coaster, arc);
+    const p = pointOnPiece(at.piece, at.t);
+    const lookArc = (arc + 1.6) % total;
+    const la = locateByArc(coaster, lookArc);
+    const lp = pointOnPiece(la.piece, la.t);
+    eye.set(p.x, p.y + 0.55, p.z);
+    ahead.set(lp.x, lp.y + 0.5, lp.z);
+    camera.position.lerp(eye, 0.55);
+    camera.lookAt(ahead);
+  });
+  return null;
+}
+
 export function CoasterLayer() {
   const worldVersion = useGameStore((s) => s.worldVersion);
 
@@ -167,6 +209,7 @@ export function CoasterLayer() {
         <CoasterTrain key={coaster.entityId} coaster={coaster} />
       ))}
       <DraftGhost />
+      <OnboardCam />
     </>
   );
 }

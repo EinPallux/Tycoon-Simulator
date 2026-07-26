@@ -28,12 +28,18 @@ export interface Profile {
 
 export interface Settings {
   uiScale: number; // 0.9 – 1.4
-  masterVolume: number; // 0–100 (audio engine arrives Phase 2)
+  masterVolume: number; // 0–100
   musicVolume: number;
   sfxVolume: number;
   edgePan: boolean;
   invertZoom: boolean;
   reducedMotion: boolean;
+  /** Suppress fireworks/strobes (GAME_DESIGN.md §18). */
+  reducedFlash: boolean;
+  /** Colorblind-safe status palette (blue/orange instead of green/red). */
+  colorblind: boolean;
+  /** Dyslexia-friendlier body font (Atkinson Hyperlegible). */
+  dyslexiaFont: boolean;
   showFps: boolean;
 }
 
@@ -45,6 +51,9 @@ export const DEFAULT_SETTINGS: Settings = {
   edgePan: false,
   invertZoom: false,
   reducedMotion: false,
+  reducedFlash: false,
+  colorblind: false,
+  dyslexiaFont: false,
   showFps: false,
 };
 

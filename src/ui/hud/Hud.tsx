@@ -2,7 +2,9 @@
 
 /** In-game HUD composition (UI_UX_DESIGN.md §7): corners busy, center sacred. */
 
+import { useGameStore } from "@/ui/stores/gameStore";
 import { AchievementWatcher } from "./AchievementWatcher";
+import { PhotoModeBar } from "./PhotoModeBar";
 import { TopBar } from "./TopBar";
 import { BuildDock } from "./BuildDock";
 import { CoasterBuilderPanel } from "./CoasterBuilderPanel";
@@ -21,6 +23,26 @@ import { HoverHint } from "./HoverHint";
 import { ZonePanel } from "./ZonePanel";
 
 export function Hud() {
+  const photoMode = useGameStore((s) => s.photoMode);
+  const onboard = useGameStore((s) => s.onboardCoaster);
+
+  // Photo mode & the onboard cam clear the stage — HUD out, minimal chrome in.
+  if (photoMode || onboard !== null) {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-10">
+        <AchievementWatcher />
+        <PhotoModeBar />
+        {onboard !== null && (
+          <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2">
+            <span className="skewed inline-block bg-ink-900/80 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-paper-050">
+              <span className="unskew inline-block">🎢 Onboard — Esc to hop off</span>
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
       <AchievementWatcher />

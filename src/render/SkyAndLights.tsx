@@ -128,9 +128,11 @@ export function SkyAndLights() {
   );
 
   useFrame(({ scene }, dt) => {
-    const sim = useGameStore.getState().sim;
+    const store = useGameStore.getState();
+    const sim = store.sim;
     if (!sim) return;
-    const t = timeOfDay01(sim.world.time);
+    // Photo mode can freeze the light at any hour it likes.
+    const t = store.photoMode && store.photoTime !== null ? store.photoTime : timeOfDay01(sim.world.time);
     let { sun, ambient } = sampleSky(t, zenith, horizon);
 
     // Weather rolls the grade toward its target (≈2 s time constant).

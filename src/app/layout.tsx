@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Big_Shoulders, Inter } from "next/font/google";
+import { Atkinson_Hyperlegible, Big_Shoulders, Inter } from "next/font/google";
+import { GlobalSettings } from "@/ui/GlobalSettings";
 import "./globals.css";
 
 const bigShoulders = Big_Shoulders({
@@ -13,6 +14,12 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const atkinson = Atkinson_Hyperlegible({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-atkinson",
+});
+
 export const metadata: Metadata = {
   title: "Wanderpark",
   description:
@@ -21,8 +28,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bigShoulders.variable} ${inter.variable}`}>
-      <body className="antialiased">{children}</body>
+    <html lang="en" className={`${bigShoulders.variable} ${inter.variable} ${atkinson.variable}`}>
+      <body className="antialiased">
+        <GlobalSettings />
+        {children}
+      </body>
     </html>
   );
 }

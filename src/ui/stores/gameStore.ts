@@ -79,6 +79,12 @@ interface GameStore {
   manualOpen: boolean;
   /** Selected zone key (banner click → rename panel). */
   selectedZone: string | null;
+  /** Photo mode: HUD hides, capture toolbar shows. */
+  photoMode: boolean;
+  /** Photo-mode lighting override (time-of-day 0..1; null = live). */
+  photoTime: number | null;
+  /** Riding a coaster: station entity id the camera is aboard. */
+  onboardCoaster: number | null;
 
   // Interaction state
   tool: Tool;
@@ -132,6 +138,9 @@ interface GameStore {
   setMilestoneSheet: (data: MilestoneSheetData | null) => void;
   setManualOpen: (open: boolean) => void;
   selectZone: (key: string | null) => void;
+  setPhotoMode: (on: boolean) => void;
+  setPhotoTime: (t01: number | null) => void;
+  setOnboardCoaster: (entityId: number | null) => void;
   startCoasterDraft: (family: CoasterFamily, entry: TrackNode) => void;
   /** Append a piece at the head. Returns false (with no change) if invalid. */
   addDraftPiece: (type: PieceType) => boolean;
@@ -166,6 +175,9 @@ export const useGameStore = create<GameStore>()(
     milestoneSheet: null,
     manualOpen: false,
     selectedZone: null,
+    photoMode: false,
+    photoTime: null,
+    onboardCoaster: null,
 
     tool: { kind: "select" },
     dockCategory: null,
@@ -235,6 +247,10 @@ export const useGameStore = create<GameStore>()(
     setMilestoneSheet: (data) => set({ milestoneSheet: data }),
     setManualOpen: (open) => set({ manualOpen: open }),
     selectZone: (key) => set({ selectedZone: key }),
+    setPhotoMode: (on) =>
+      set(on ? { photoMode: true, dockCategory: null, parkPanel: null } : { photoMode: false, photoTime: null }),
+    setPhotoTime: (t01) => set({ photoTime: t01 }),
+    setOnboardCoaster: (entityId) => set({ onboardCoaster: entityId }),
 
     startCoasterDraft: (family, entry) =>
       set((s) => ({
@@ -293,7 +309,9 @@ export const useGameStore = create<GameStore>()(
 
     escape: () => {
       const s = get();
-      if (s.milestoneSheet !== null) set({ milestoneSheet: null });
+      if (s.onboardCoaster !== null) set({ onboardCoaster: null });
+      else if (s.photoMode) set({ photoMode: false, photoTime: null });
+      else if (s.milestoneSheet !== null) set({ milestoneSheet: null });
       else if (s.veilOpen) set({ veilOpen: false });
       else if (s.manualOpen) set({ manualOpen: false });
       else if (s.parkPanel !== null) set({ parkPanel: null });
