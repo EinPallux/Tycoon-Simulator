@@ -9,9 +9,11 @@ import { setMusicMood } from "@/audio/music";
 import { useAppStore } from "@/ui/stores/appStore";
 import { TabStrip, type TabDef } from "@/ui/kit/TabStrip";
 import { ToastRail } from "@/ui/kit/Toast";
+import { AchievementsTab } from "@/ui/hub/AchievementsTab";
 import { ContinueTab } from "@/ui/hub/ContinueTab";
 import { MyParksTab } from "@/ui/hub/MyParksTab";
 import { NewParkTab } from "@/ui/hub/NewParkTab";
+import { RecordsTab } from "@/ui/hub/RecordsTab";
 import { SettingsTab } from "@/ui/hub/SettingsTab";
 import { CreditsTab } from "@/ui/hub/CreditsTab";
 
@@ -21,8 +23,8 @@ const TABS: ReadonlyArray<TabDef<HubTab>> = [
   { id: "continue", label: "Continue" },
   { id: "parks", label: "My Parks" },
   { id: "new", label: "New Park" },
-  { id: "achievements", label: "Achievements", lockedHint: "Arrives in Phase 4" },
-  { id: "records", label: "Records", lockedHint: "Arrives in Phase 4" },
+  { id: "achievements", label: "Achievements" },
+  { id: "records", label: "Records" },
   { id: "settings", label: "Settings" },
   { id: "credits", label: "Credits" },
 ];
@@ -74,6 +76,8 @@ export default function HubPage() {
         {tab === "continue" && <ContinueTab onNewPark={() => setTab("new")} />}
         {tab === "parks" && <MyParksTab />}
         {tab === "new" && <NewParkTab />}
+        {tab === "achievements" && <AchievementsTab />}
+        {tab === "records" && <RecordsTab />}
         {tab === "settings" && <SettingsTab />}
         {tab === "credits" && <CreditsTab />}
       </div>

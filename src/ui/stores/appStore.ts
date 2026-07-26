@@ -8,6 +8,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { EMPTY_RECORDS, type RecordsState } from "@/content/achievements";
 
 export const AVATAR_COLORS = [
   "#2E5AE8",
@@ -54,11 +55,17 @@ interface AppStore {
   pennyDismissed: string[];
   /** First-time explainer topics already shown once. */
   pennySeen: string[];
+  /** Cross-save achievement unlocks: id → wall-clock ms. */
+  achievements: Record<string, number>;
+  /** Cross-park records. */
+  records: RecordsState;
   setProfile: (profile: Profile) => void;
   updateSettings: (patch: Partial<Settings>) => void;
   resetSettings: () => void;
   dismissPennyTopic: (topic: string) => void;
   markPennySeen: (topic: string) => void;
+  unlockAchievement: (id: string) => void;
+  updateRecords: (patch: Partial<RecordsState>) => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -68,6 +75,8 @@ export const useAppStore = create<AppStore>()(
       settings: DEFAULT_SETTINGS,
       pennyDismissed: [],
       pennySeen: [],
+      achievements: {},
+      records: EMPTY_RECORDS,
       setProfile: (profile) => set({ profile }),
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
       resetSettings: () => set({ settings: DEFAULT_SETTINGS }),
@@ -77,6 +86,11 @@ export const useAppStore = create<AppStore>()(
         ),
       markPennySeen: (topic) =>
         set((s) => (s.pennySeen.includes(topic) ? s : { pennySeen: [...s.pennySeen, topic] })),
+      unlockAchievement: (id) =>
+        set((s) =>
+          s.achievements[id] ? s : { achievements: { ...s.achievements, [id]: Date.now() } },
+        ),
+      updateRecords: (patch) => set((s) => ({ records: { ...s.records, ...patch } })),
     }),
     { name: "wanderpark.app" },
   ),
