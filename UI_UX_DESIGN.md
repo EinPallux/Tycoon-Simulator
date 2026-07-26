@@ -186,6 +186,15 @@ The signature control. A skewed dock of 7 `CategoryCard` minis: **Paths · Coast
 ### 7.7 In-world overlays
 Emote bubbles (billboarded, distance-faded, density-capped), zone banners, queue-length glow on hover, litter/beauty heatmap toggles (`H`), ghost previews, selection outline (accent), breakdown smoke + "!" marker.
 
+> **As shipped (Phase 4):** the guidance chrome is complete — Goals tab with offer
+> card (accept/reroll/decline) + progress bars, goal chips under the milestone chip,
+> Penny's advisor rail (portrait cards, bottom-left, "Don't repeat this"), the Guided
+> Start checklist (top-left, magenta header, live ticks), the Park Manual ("?"),
+> milestone celebration sheets, zone banner sprites with a rename card, the photo-mode
+> capture bar, and the onboard-cam chip. Hub adds the Achievements badge wall, the
+> Records bragging wall, and a minimap thumbnail on Continue. Heatmap toggles and
+> queue-glow remain Phase-5.
+
 ---
 
 ## 8. Onboarding UI

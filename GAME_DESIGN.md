@@ -239,8 +239,14 @@ Rating/guest-count thresholds award named tiers (Local Attraction → Rising Sta
 ### 10.3 Theming zones
 ≥8 same-theme scenery pieces within a radius around ≥1 ride forms a **named zone** (player-nameable, auto-suggested: "Pirate Cove"): +excitement to zone rides, +mood to zone guests, zone banner on the map. Drives the Planet-Coaster fantasy of *places*, not just objects, and makes scenery economically rational.
 
+> **As shipped (Phase 4):** pieces cluster when within 3 tiles of a same-theme
+> neighbor (union-find); rides within 4 tiles of the cluster join the zone and earn
+> **+0.5 excitement** through the one ride-stats lens. Zones recompute on any build
+> edit; names persist in the save keyed by cluster anchor. In-world banner sprites
+> (canvas-drawn, click to rename). Six themes with 8+ buildable pieces each.
+
 ### 10.4 Achievements (~25)
-Cross-save badges in the hub (examples): *First Blood(less)* — survive 10 breakdowns; *Loop Scholar* — coaster with 3 inversions ≥7 excitement; *Debt-Free* — repay $50k; *Penny Pincher* — profitable week with entry ≥ $30; *Full Bladder Economy* — 1,000 toilet uses. Stored in the local profile (§17).
+Cross-save badges in the hub (examples): *First Blood(less)* — survive 10 breakdowns; *Loop Scholar* — coaster with 3 inversions ≥7 excitement; *Debt-Free* — repay $50k; *Penny Pincher* — profitable week with entry ≥ $30; *Full Bladder Economy* — 1,000 toilet uses. Stored in the local profile (§17). *(Shipped in Phase 4: exactly 25, detected from lifetime world tallies by an in-game watcher; hub badge wall + cross-park Records tab alongside.)*
 
 ---
 
@@ -300,6 +306,14 @@ Optional, dynamic, contextual goals that give direction without ever taking the 
 ### Penny's hint engine (the other half of "guided")
 State-driven, throttled, dismissible-forever-per-topic suggestions: thirst thoughts trending → "A drinks stall near the Wild Mouse would print money right now"; cash idle > $30k → "That savings pile could be a coaster"; rating term lagging → points at the weakest of the five terms. Hints never repeat within 3 game-days and never interrupt building.
 
+> **As shipped (Phase 4):** 12 templates live across all six categories with three
+> mechanics — *reach* (hit a value once), *delta* (accumulate vs. a baseline tally),
+> *hold-days* (keep a condition for N day rollovers). Offers surface every 2–4 days
+> (faster in busier parks), sit for 1.5 days, and reroll once for free per press.
+> Rewards as specced, plus three earn-only trophy scenery pieces. Penny ships with 10
+> hint rules + 4 first-time explainers (breakdown/storm/zone/opportunity), suppressed
+> while any tool is active and rate-limited globally to one hint per 40 s.
+
 ---
 
 ## 14. Tone, writing & content safety
@@ -347,6 +361,12 @@ Relaxed: +40% start cash, interest 4%, breakdowns −50%, guests +15% patient. C
 
 Placement thunk + dust puff · demolish confetti of parts · coin-pop on every sale with daily-total ticker · guest emotes bubbling constantly · milestone fanfare with park-wide firework burst · rating tick-up shimmer · queue-length heat glow on hover · coaster test-run onboard camera with wind SFX · money-loss red pulse on the wallet, never a modal · advisor Penny reacts (cheers/facepalms) in her toast portraits · photo mode (Phase 4): free camera, DOF, time-of-day slider, stickers, PNG export (drives sharing without accounts).
 
+> **As shipped (Phase 4):** dust, confetti, coin-pops, goal confetti and firework
+> barrages run in ONE pooled 320-particle instanced mesh (+1 draw call, zero per-frame
+> GC), all silenced by reduced-motion and fireworks additionally by reduced-flash;
+> rating shimmer + onboard cam + photo mode (light slider, PNG export) live. Still
+> queued for Phase 5: coin daily-ticker, queue-heat hover glow, wind SFX, DOF, stickers.
+
 ---
 
 ## 17. Meta, saves & leaderboard (post-1.0)
@@ -360,6 +380,12 @@ Placement thunk + dust puff · demolish confetti of parts · coin-pop on every s
 ## 18. Accessibility
 
 Color-blind-safe status palettes (never color-only meaning) · full keyboard map + remapping · UI scale 90–140% · reduced-motion mode (disables shakes/parallax) · reduced-flash mode · subtitles/visual cues for all audio signals · pause-anywhere; sim never punishes pausing · dyslexia-friendlier font toggle · Penny explainers use plain language. Guest inclusivity per §14.
+
+> **As shipped (Phase 4):** colorblind palette (blue = good / orange = trouble via CSS
+> token swap), Atkinson Hyperlegible body-font toggle, reduced-flash, UI scale and
+> reduced motion — all applied live everywhere from one global settings effect. Every
+> audio signal already pairs with a toast/visual. Key **remapping UI** is the one §18
+> item still open — Phase 5 release polish; the full keymap is documented in Settings.
 
 ---
 

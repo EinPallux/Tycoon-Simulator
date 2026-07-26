@@ -70,12 +70,12 @@ Everything a theme park needs to bootstrap:
 | Guests | BlockyCharacters (18) + CuteCharacters (12 + mobility aids) | crowd = instanced; aids included for inclusive guest gen (`GAME_DESIGN.md §14`) |
 | Staff | BlockyCharacters — **shipped Phase 3:** `staff/janitor` (character-e), `staff/mechanic` (character-f), `staff/entertainer` (character-g), distinct silhouettes per role | held props/tint slots deferred to the Phase-4 juice pass |
 | Advisor Penny | CuteCharacters female + EmotesPack | |
-| Scenery: Nature set | NatureKit (329) + MiniForest | trees, rocks, gardens, fences |
-| Scenery: Pirate set | PirateKit + WatercraftKit | ships, palms, crates, cannons |
-| Scenery: Space set | SpaceKit + ModularSpaceKit + KayKit SpaceBase | |
-| Scenery: Castle set | CastleKit + KayKit Medieval Hexagon + Dungeon | |
-| Scenery: Spooky set | GraveyardKit + KayKit Spooktober + Skeletons | |
-| Scenery: Winter set | HolidayKit | |
+| Scenery: Nature set | NatureKit (329) + MiniForest | trees, rocks, gardens, fences — shipped Phase 1 |
+| Scenery: Pirate set | PirateKit + WatercraftKit | **shipped Phase 4:** `theme/pirate-*` — palms ×2, pennant, crates, cannon, chest, lookout tower (2×2), rocks |
+| Scenery: Space set | SpaceKit + ModularSpaceKit + KayKit SpaceBase | **shipped Phase 4:** `theme/space-*` — rocket (2×2), dish, speeder, meteor, astronaut, alien, generator |
+| Scenery: Castle set | CastleKit + KayKit Medieval Hexagon + Dungeon | **shipped Phase 4:** `theme/castle-*` — flags ×2, catapult, keep tower (2×2), steps, boulders |
+| Scenery: Spooky set | GraveyardKit + KayKit Spooktober + Skeletons | **shipped Phase 4:** `theme/spooky-*` — gravestone, cross, crypt (2×2), coffin, candles, altar, brazier, pumpkin |
+| Scenery: Winter set | HolidayKit | **shipped Phase 4:** `theme/winter-*` — snowman, candy canes ×2, present, reindeer, sled, snow pile, nutcracker, trimmed tree |
 | Plazas, lamps, urban furniture | CityKitRoads/Suburban/Commercial + FurnitureBits | lamps, hydrants, signs |
 | Petting-zoo props / mascots (backlog) | CubePets | post-1.0 candy |
 | Skyboxes (day/night cycle) | Kenney Skyboxes | shipped by the pipeline; v1 renders a procedural gradient dome instead (continuous dawn/dusk blending — `TECHNICAL_ARCHITECTURE.md §8`), panoramas reserved for future weather/mood variants |
@@ -94,7 +94,7 @@ Everything a theme park needs to bootstrap:
 | Steel/mouse coaster **cars** | ~~Compose or source~~ **Resolved (Phase 3):** CoasterKit ships them — `coaster-train.glb` / `coaster-train-front.glb` (used for Wild Mouse) + `train-log-flume.glb`; hanging/wooden variants ready for future families |
 | Water surface for Swan Boats/flume basins | Shader-based animated water tile (no model needed) |
 | Fireworks/particles | GPU sprites, generated (no asset) |
-| Audio (music + SFX) | Kenney Audio packs (CC0: UI, jingles, crowd), sourced at Phase 4; same licensing rules |
+| Audio (music + SFX) | ~~Kenney Audio packs sourced at Phase 4~~ **Resolved differently (Phase 4):** the soundtrack is a fully procedural WebAudio chip-orchestra (`src/audio/music.ts`) and all SFX remain synthesized — zero audio assets shipped, zero licenses to track, and moods react to weather/time instantly. Sourced packs remain an option if the owner ever wants "real" instruments |
 | Fonts | Big Shoulders Display, Inter, Atkinson Hyperlegible — SIL OFL via Google Fonts, self-hosted |
 
 ---

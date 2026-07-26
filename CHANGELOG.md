@@ -7,6 +7,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 *(nothing yet)*
 
+## [0.4.0] — 2026-07-26 — Phase 4: Progression & Polish
+
+### Added
+- **Opportunities** (the guided-sandbox pull): 12 goal templates across 6 categories, parameters rolled from the live park (peaks, tallies, rating, coasters), at most 2 active + 1 offered, offers every 2–4 days rating-scaled. Accept/reroll/decline freely — expiry is quiet and penalty-free. Rewards: cash, research surges, a free ad campaign, and three exclusive trophy scenery pieces (earn-only, even in freeplay). Goals tab + objective-chip live progress.
+- **Penny, park advisor**: 10 throttled state-driven hints (thirsty crowds, idle cash, missing staff, weak rating terms…) with per-topic 3-day cooldowns and dismiss-forever; 4 one-time explainers on first breakdown/storm/zone/opportunity. Never interrupts building.
+- **Guided Start**: 7-step predicate-driven checklist (path → ride → queue → guests → needs → janitor → rating 300) for parks with the toggle ON — which now defaults ON for the first-ever park. No scripted mode: the park you build is the park you keep; skippable at any second; retires itself with a cheer.
+- **Park Manual**: 14 searchable plain-English articles ("?" in the top bar).
+- **Theming zones**: 8+ same-theme scenery near a ride forms a named zone (Pirate Cove, Star Harbor, Frostfair…) with +0.5 excitement for zone rides, in-world banner sprites, and click-to-rename. **38 new themed pieces** across pirate/space/castle/spooky/winter bring scenery past 75 across 6 sets.
+- **Three new coaster families** on the same piece system: Steel Streak (Thrill 7), Sky Hanger (Thrill 8 — the train hangs under the rail), Park Monorail (Family 7); research branches extended to 8/7 nodes.
+- **Milestone celebration sheets** with stats roll-up and next-tier teaser.
+- **Achievements** (25, cross-save) with tally-backed detection, unlock toasts, and a hub badge wall; **Records** tab with cross-park bests and lifetime totals; **Continue** card minimap thumbnail drawn from save data.
+- **Juice pass**: one pooled 320-particle instanced system — placement dust, demolish confetti, sale coin-pops, goal confetti, milestone firework barrages (+ crackle SFX); rating tick-up shimmer. Reduced-motion spawns nothing; reduced-flash kills fireworks.
+- **Audio v2**: procedural chip-orchestra soundtrack — menu theme in the hub, day/night/storm moods in the park, seeded patterns, 1.4 s crossfades, dedicated music fader (documented deviation from sourced packs: zero assets, zero licenses, perfectly reactive). New pop/chime/whoosh SFX; walla moved to the SFX fader.
+- **Photo mode** (P): HUD retreats to a capture bar, golden-hour light slider (visuals only — the sim keeps living), PNG export named after the park. **Coaster onboard cam** via "Ride it" in the inspector (arc-accurate front-car camera, Esc hops off).
+- **Accessibility**: colorblind-safe status palette (blue/orange), dyslexia-friendlier body font (Atkinson Hyperlegible), reduced-flash mode — all live-applied everywhere alongside UI scale + reduced motion (which now work in-game, not just the hub).
+- **World tallies** (17 lifetime counters) powering goals, achievements and records; **save v4** (+ migration & fixtures) for tallies, opportunities, zone names, bonus unlocks and the guided flag.
+- Tests: 57 green (zones form/dissolve/rename, offer lifecycle, reward payout, penalty-free expiry, template sanity sweep, v1→v4 chain).
+
+### Changed
+- Settings gained Accessibility toggles and an updated key reference; music/effects faders now do exactly what they say.
+
+### Deferred (tracked in ROADMAP)
+- Web-Worker sim flag, static batching/LOD (Phase 5 hardening — render reads sim zero-copy; needs a snapshot protocol; current profiles don't justify it), DOF/stickers in photo mode, key remapping UI, queue-heat hover glow.
+
 ## [0.3.0] — 2026-07-26 — Phase 3: Coasters & Chaos
 
 ### Added

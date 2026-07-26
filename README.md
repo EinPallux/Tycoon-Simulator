@@ -12,9 +12,9 @@ You start with an empty plot of land, a modest pile of cash and an uncomfortable
 
 | | |
 |---|---|
-| **Current phase** | 🟡 **Phase 3 — Coasters & Chaos: code complete** (remaining: real-GPU perf pass, more coaster families + onboard cam in Phase 4/5) |
-| **Next step** | Phase 4 — Progression & Polish (see [ROADMAP.md](./ROADMAP.md)) |
-| **Playable build** | ✅ v0.3.0 — build-your-own coasters (Wild Mouse + Log Flume with loops), staff, breakdowns, loans & the debt spiral, research tree, weather, events, marketing |
+| **Current phase** | 🟡 **Phase 4 — Progression & Polish: code complete** (remaining: real-GPU perf pass, worker flag + remapping + extra flats in Phase 5) |
+| **Next step** | Phase 5 — Release 1.0 (see [ROADMAP.md](./ROADMAP.md)) |
+| **Playable build** | ✅ v0.4.0 — the guided sandbox pull: Opportunities, Penny, Guided Start, themed zones (6 sets), 5 coaster families, achievements & records, juice, reactive music, photo mode + onboard cam |
 | **Target platform** | Desktop browser (1280px+), deployed on Vercel |
 | **Mode** | Single-player guided sandbox. Post-1.0: friend leaderboard (no accounts) |
 

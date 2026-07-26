@@ -92,13 +92,13 @@ export const MODEL_SOURCES: Record<string, ModelSource> = {
   "guests/char-d": { kit: "Kenney_BlockyCharacters", file: "character-d.glb", scale: 0.33 },
 
   // ── Theming sets (GAME_DESIGN.md §10.3; ~1u=1m kits scaled to tiles) ──
-  "theme/pirate-palm": { kit: "Kenney_PirateKit", file: "palm-detailed-straight.glb", scale: 1.4 },
-  "theme/pirate-palm-bend": { kit: "Kenney_PirateKit", file: "palm-detailed-bend.glb", scale: 1.4 },
+  "theme/pirate-palm": { kit: "Kenney_PirateKit", file: "palm-detailed-straight.glb", scale: 0.85 },
+  "theme/pirate-palm-bend": { kit: "Kenney_PirateKit", file: "palm-detailed-bend.glb", scale: 0.85 },
   "theme/pirate-flag": { kit: "Kenney_PirateKit", file: "flag-pirate-pennant.glb", scale: 1.4 },
   "theme/pirate-crate": { kit: "Kenney_PirateKit", file: "crate-bottles.glb", scale: 1.3 },
   "theme/pirate-cannon": { kit: "Kenney_PirateKit", file: "cannon.glb", scale: 1.3 },
   "theme/pirate-chest": { kit: "Kenney_PirateKit", file: "chest.glb", scale: 1.3 },
-  "theme/pirate-tower": { kit: "Kenney_PirateKit", file: "tower-complete-small.glb", scale: 1.5 },
+  "theme/pirate-tower": { kit: "Kenney_PirateKit", file: "tower-complete-small.glb", scale: 1.1 },
   "theme/pirate-rocks": { kit: "Kenney_PirateKit", file: "rocks-c.glb", scale: 1.4 },
   "theme/space-rocket": { kit: "Kenney_SpaceKit", file: "rocket_baseA.glb", scale: 1.6 },
   "theme/space-dish": { kit: "Kenney_SpaceKit", file: "satelliteDish.glb", scale: 1.4 },

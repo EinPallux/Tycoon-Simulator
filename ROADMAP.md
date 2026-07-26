@@ -70,7 +70,7 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 **Goal:** the flagship creative tool + the full management fantasy: risk, debt, staff, research. This is the phase that makes it *a tycoon game*.
 
 **Scope** *(status: code complete 2026-07-26 — verified in-browser via scripted park + screenshots; deferred slices annotated)*
-- [x] Coaster builder: grid-snapped piece placement (7 piece types), circuit validation, auto-supports, arc-length train motion, live ghost + home beacon + hotkeys, one-command undoable commit (*2 of 5 families shipped — Wild Mouse + Log Flume; Steel/Inverted/Monorail, train config and the test-run cam ride the Phase-4/5 content pass on the same piece system*)
+- [x] Coaster builder: grid-snapped piece placement (7 piece types), circuit validation, auto-supports, arc-length train motion, live ghost + home beacon + hotkeys, one-command undoable commit (*Phase 3 shipped Wild Mouse + Log Flume; Steel Streak, Sky Hanger and Park Monorail landed in Phase 4 on the same piece system, along with the onboard cam — train config remains Phase-5*)
 - [x] Coaster stats from geometry (energy-model physics; excitement/intensity/nausea per `GAME_DESIGN.md §15.3` as-built) + guest thrill-matching response
 - [ ] Remaining 6 flat rides + walk-through attractions (Mini-Golf, Go-Karts, Railroad, Swan Boats) — *moved to Phase 4 content pass; Phase 3 shipped the systems, not the catalog*
 - [x] Staff: mechanics/janitors/entertainers — hire/fire tray, weekly wages, self-assigning jobs (nearest litter / broken rides / longest queue), pathing, skill growth; litter cleanup loop closes (*patrol-zone painting + overworked marker → Phase 4*)
@@ -94,26 +94,26 @@ Few phases, each **big and meaningful** (owner's requirement): every phase ends 
 
 **Goal:** turn the systems sandbox into a *guided sandbox with a pull* — and make every minute feel Steam-release good.
 
-**Scope**
-- [ ] Opportunities engine: template pool (6 categories), state-driven generation, accept/decline/reroll, rewards, Goals panel + objective chip integration (`GAME_DESIGN.md §13`)
-- [ ] Penny hint engine (state-driven, throttled, dismiss-forever topics)
-- [ ] Guided Start: configurator toggle + Penny checklist flow + contextual first-time explainers + Park Manual codex
-- [ ] New-park configurator final: name, map size S/M/L, cash/debt preset, difficulty, Guided Start & Freeplay-unlocks toggles
-- [ ] Milestone tier sheets (stats roll-up celebration) + park-over "repossession" sheet
-- [ ] Theming sets & zones: 6 sets ≥ 60 scenery pieces, zone detection/bonuses/banners/naming
-- [ ] Achievements (~25) + hub badge grid + toasts
-- [ ] Hub completion: Continue thumbnail card, Records tab, Credits from manifest
-- [ ] Audio v2: music (menu + 3 in-park moods), full SFX pass, mixer settings
-- [ ] Juice pass: every item in `GAME_DESIGN.md §16` (placement dust, demolish confetti, milestone fireworks, rating shimmer…)
-- [ ] Photo mode (free cam, DOF, time slider, stickers, PNG export)
-- [ ] Performance hardening: static batching for tracks/scenery clusters, LOD where needed, optional Web-Worker sim flag, memory pass
-- [ ] Accessibility completion (`GAME_DESIGN.md §18`): colorblind palettes, remapping UI, UI scale, reduced motion/flash, dyslexia font
+**Scope** *(status: code complete 2026-07-26 — verified in-browser via scripted screenshots; deferred slices annotated)*
+- [x] Opportunities engine: 12 templates across the 6 categories, parameters rolled from live park state, 2-active+1-offered cadence, accept/decline/reroll, quiet expiry, rewards (cash / research surge / free campaign / exclusive trophy scenery), Goals tab + objective-chip progress (`GAME_DESIGN.md §13`)
+- [x] Penny hint engine: 10 state-driven throttled hints (3-game-day topic cooldown, dismiss-forever persisted per profile) + 4 one-time event explainers (first breakdown/storm/zone/opportunity); never interrupts building
+- [x] Guided Start: configurator toggle (defaults ON for the first-ever park), Penny's 7-step predicate-driven checklist (no scripted mode — the park is real), skippable forever, auto-retires with a cheer; Park Manual codex (14 searchable articles, "?" in the top bar) (*glowing UI-target fly-tos → Phase 5 polish*)
+- [x] New-park configurator final: name, map size S/M/L, difficulty presets, Guided Start & Freeplay toggles — complete since Phase 1, guided default fixed here
+- [x] Milestone tier sheets (stats roll-up celebration, next-tier teaser) + park-over sheet (Phase 3)
+- [x] Theming sets & zones: 6 themes / 75+ scenery pieces (38 new across pirate/space/castle/spooky/winter), union-find zone detection (8+ pieces near a ride), +0.5 excitement zone bonus, canvas-sprite world banners, click-to-rename with per-theme name suggestions
+- [x] Achievements (25) with cheap tally-backed predicates + hub badge wall + unlock toasts; cross-save in the local profile
+- [x] Hub completion: Continue card minimap thumbnail (drawn from save data), Records tab (cross-park bests + lifetime totals), Credits (manifest-driven since Phase 1)
+- [x] Audio v2: procedural chip-orchestra music — menu + day/night/storm park moods with crossfades on a dedicated mixer channel (*documented deviation: zero-asset generative music instead of sourced CC0 packs*); pop/chime/whoosh SFX; walla on the SFX fader
+- [x] Juice pass (`GAME_DESIGN.md §16`): pooled 320-particle instanced system — placement dust, demolish confetti, sale coin-pops, goal confetti, milestone firework barrages with crackle; rating tick-up shimmer; money-loss pulse + Penny portraits shipped earlier (*queue-heat hover glow + coin daily-ticker → Phase 5*)
+- [x] Photo mode (P): HUD retreat, free camera, golden-hour light slider, PNG export; coaster **onboard cam** from the ride inspector (*DOF + stickers → Phase 5 wishlist — 60 fps first*)
+- [ ] Performance hardening: instancing-first architecture is already in place (a full park renders in ~20 draw calls); static batching, LOD and the Web-Worker sim flag are **deferred to Phase 5** — the render layer currently reads sim state zero-copy each frame, so a worker needs a snapshot protocol first, and current profiles don't justify it
+- [x] Accessibility completion (`GAME_DESIGN.md §18`): colorblind-safe status palette, dyslexia-friendlier font (Atkinson Hyperlegible), reduced-motion + reduced-flash, UI scale 90–140% — all applied globally, live; pause-anywhere + visual cues for audio were already in (*key remapping UI → Phase 5 release polish*)
 
 **Acceptance criteria**
-1. New player completes the Guided Start unaided in ≤ 20 min and names, unprompted, what rating/needs/breakdowns mean (hallway test ×3).
-2. Opportunities always offer something sensible for the current park state (audited across early/mid/late fixture parks); declining everything never blocks progress; rewards persist through save/load.
-3. Stress park holds budgets with juice on; worker flag passes the determinism suite.
-4. The game *sounds* alive: blindfold test — you can hear rating rise (crowd swell) and trouble (Penny uh-oh, springs).
+1. ⚪ Guided Start ≤ 20 min hallway test — owner-side once deployed; the checklist reacts live to real play (verified: steps tick as the world changes) and every explainer is one sentence.
+2. ✅ Opportunities roll from current park state only (template eligibility + parameter fill audited by unit sweep across all 12 templates); declining/expiry is provably penalty-free (soak-asserted); accepted goals + rewards survive save round-trips.
+3. 🟡 Juice holds budget by construction (one instanced mesh, 320-particle pool, zero GC per frame — +1 draw call); the worker-flag half is deferred to Phase 5 with the hardening slice.
+4. 🟡 The park sounds alive — mood-reactive music (storm minor-key, night pads), walla scaling with crowd, event chimes; the blindfold judgment call is the owner's.
 
 ---
 
